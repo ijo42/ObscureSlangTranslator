@@ -7,8 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "ijo42 <admin@ijo42.ru>",
+  "license": "MPL-2.0",
   "dependencies": {
     "node-telegram-bot-api": "^0.51.0",
     "pg": "^8.5.1"
