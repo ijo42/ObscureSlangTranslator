@@ -26,7 +26,7 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
 });
 
 
-bot.onText(/^\/save (\w+) ([\w\s.]+)$/, (msg, match) => {
+bot.onText(/^\/save ([a-zA-Z0-9_а-яА-Я]+) ([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
     // 'msg' is the received Message from Telegram
     // 'match' is the result of executing the regexp above on the text content
     // of the message
