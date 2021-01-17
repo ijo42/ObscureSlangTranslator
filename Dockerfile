@@ -1,6 +1,4 @@
 FROM node:14
-USER node
-
 WORKDIR /usr/src/app
 
 COPY package*.json ./
