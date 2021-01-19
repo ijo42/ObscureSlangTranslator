@@ -9,6 +9,8 @@ on:
   create:
     tags:
       - v*
+    branches-ignore:
+      - 'dependabot/**'
 jobs:
   release:
     name: Build Release
