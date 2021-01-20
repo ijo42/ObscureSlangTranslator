@@ -31,7 +31,10 @@ bot.onText(/\/size$/, (msg) => {
 
 bot.onText(/^([a-zA-Z0-9_а-яА-Я]+) ([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
     const chatId = msg.chat.id;
-    const vars = [match[1].replaceAll('_', ' '), match[2], msg.chat.username]
+    const user = msg.message.from;
+    const username = (user.username || user.first_name + user.last_name) +
+        util.format(' <%i>', user.id) ;
+    const vars = [match[1].replaceAll('_', ' '), match[2], username]
 
     db.query(queryInsert, vars).then(res => {
         bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]['id']));
