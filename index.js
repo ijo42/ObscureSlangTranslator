@@ -25,7 +25,7 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
 bot.onText(/\/size$/, (msg) => {
     const chatId = msg.chat.id;
     db.query(querySize).then(res => {
-        bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]));
+        bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]['max']));
     })
 });
 
