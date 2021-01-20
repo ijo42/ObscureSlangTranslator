@@ -11,7 +11,8 @@ const bot = new TelegramBot(token, {polling: true});
 
 const queryInsert = 'INSERT INTO obscure(term, value, author) VALUES($1, $2, $3) RETURNING *';
 const querySize = 'SELECT max(id) FROM obscure';
-const echoText = 'Currently, DB contains %s terms';
+const dbSizeText = 'Currently, DB contains %s terms';
+const welcomeText = 'Welcome, available commands: /size'
 
 // Matches "/echo [whatever]"
 bot.onText(/\/echo (.+)/, (msg, match) => {
@@ -24,7 +25,7 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
 bot.onText(/\/size$/, (msg) => {
     const chatId = msg.chat.id;
     db.query(querySize).then(res => {
-        bot.sendMessage(chatId, util.format(echoText, res.rows[0]));
+        bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]));
     })
 });
 
@@ -33,6 +34,14 @@ bot.onText(/^([a-zA-Z0-9_а-яА-Я]+) ([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, mat
     const vars = [match[1], match[2], msg.chat.username]
 
     db.query(queryInsert, vars).then(res => {
-        bot.sendMessage(chatId, util.format(echoText, res.rows[0]['id']));
+        bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]['id']));
     }).catch(e => console.error(e.stack));
 });
+
+bot.on('new_chat_members', (msg) => {
+    bot.sendMessage(msg.chat.id, welcomeText);
+})
+
+bot.onText(/\/start/, (msg) => {
+    bot.sendMessage(msg.chat.id, welcomeText);
+})
