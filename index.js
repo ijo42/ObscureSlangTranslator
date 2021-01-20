@@ -10,6 +10,7 @@ global.debug = process.env.debug || false;
 const bot = new TelegramBot(token, {polling: true});
 
 const queryInsert = 'INSERT INTO obscure(term, value, author) VALUES($1, $2, $3) RETURNING *';
+const querySize = 'SELECT max(id) FROM obscure';
 const echoText = 'Currently, DB contains %s terms';
 
 // Matches "/echo [whatever]"
@@ -25,6 +26,12 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
     bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\/size$/, (msg) => {
+    const chatId = msg.chat.id;
+    db.query(querySize).then(res => {
+        bot.sendMessage(chatId, util.format(echoText, res.rows[0]));
+    })
+});
 
 bot.onText(/^([a-zA-Z0-9_а-яА-Я]+) ([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
     // 'msg' is the received Message from Telegram
