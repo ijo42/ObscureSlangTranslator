@@ -29,7 +29,7 @@ bot.onText(/\/size$/, (msg) => {
     })
 });
 
-bot.onText(/^([a-zA-Z0-9_а-яА-Я]+) ([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
+bot.onText(/^([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
     const chatId = msg.chat.id;
     const user = msg.message.from;
     const username = (user.username || user.first_name + user.last_name) +
