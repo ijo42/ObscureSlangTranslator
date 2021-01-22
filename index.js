@@ -31,9 +31,9 @@ bot.onText(/\/size$/, (msg) => {
 
 bot.onText(/^([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
     const chatId = msg.chat.id;
-    const user = msg.message.from;
-    const username = (user.username || user.first_name + user.last_name) +
-        util.format(' <%i>', user.id) ;
+    const user = msg.from;
+    const username = (user.username || util.format('%s %s', user.first_name, user.last_name || '-' )) +
+        util.format(' <%i>', user.id);
     const vars = [match[1], match[2], username]
 
     db.query(queryInsert, vars).then(res => {
