@@ -29,12 +29,14 @@ bot.onText(/\/size$/, (msg) => {
     })
 });
 
-bot.onText(/^([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, match) => {
+bot.onText(/^(\/add )?([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. ]+)$/, (msg, [, command, term, value]) => {
+    if(msg.chat.type === 'private' || command)
+        return;
     const chatId = msg.chat.id;
     const user = msg.from;
     const username = (user.username || util.format('%s %s', user.first_name, user.last_name || '-' )) +
         util.format(' <%i>', user.id);
-    const vars = [match[1], match[2], username]
+    const vars = [term, value, username];
 
     db.query(queryInsert, vars).then(res => {
         bot.sendMessage(chatId, util.format(dbSizeText, res.rows[0]['id']));
