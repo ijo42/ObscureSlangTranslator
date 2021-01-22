@@ -48,3 +48,7 @@ bot.on('new_chat_members', (msg) => {
 bot.onText(/\/start/, (msg) => {
     bot.sendMessage(msg.chat.id, welcomeText);
 })
+
+bot.on('polling_error', (error) => {
+    console.log(error.code);  // => 'EFATAL'
+});
