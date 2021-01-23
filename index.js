@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const db = require("./db");
 const util = require("util");
 const patterns = require("db/patterns");
+const obscureUtils = require('utils');
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
@@ -22,8 +23,7 @@ bot.onText(patterns.commands.add.regexp, (msg, [, command, term, value]) => {
         return;
     const chatId = msg.chat.id;
     const user = msg.from;
-    const username = (user.username || util.format('%s %s', user.first_name, user.last_name || '-')) +
-        util.format(' <%i>', user.id);
+    const username = obscureUtils.formatUsername(user);
     const vars = [term, value, username];
 
     db.query(patterns.queries.insertTerm, vars).then(res => {
