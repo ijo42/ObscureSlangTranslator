@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const db = require("./db");
 const util = require("util");
-const patterns = require("dbPatterns");
+const patterns = require("db/patterns");
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
