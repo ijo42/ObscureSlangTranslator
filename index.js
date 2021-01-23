@@ -11,7 +11,7 @@ const bot = new TelegramBot(token, {polling: true});
 const authorFieldLimit = 32;
 const commands = {
     add: {
-        regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. ]+)$/,
+        regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. -]+)$/,
         desk: 'Main upload command'
     },
     size: {
@@ -32,7 +32,7 @@ bot.onText(commands.size.regexp, (msg) => {
 });
 
 bot.onText(commands.add.regexp, (msg, [, command, term, value]) => {
-    if (msg.chat.type === 'private' || command)
+    if (msg.chat.type !== 'private' && command === undefined)
         return;
     const chatId = msg.chat.id;
     const user = msg.from;
@@ -59,7 +59,7 @@ bot.on('polling_error', (error) => {
 function formatUsername(user) {
     return util.format('%s <%i>', (user.username ||
         util.format('%s %s', user.first_name, user.last_name || '-'))
-            .substring(0, authorFieldLimit - user.id.length - 3), //DB Limit - two parentheses - space - ID length
+            .substring(authorFieldLimit - user.id.length - 3), //DB Limit - two parentheses - space - ID length
         user.id);
 }
 function capitalizeFirstLetter([first, ...rest]) {
