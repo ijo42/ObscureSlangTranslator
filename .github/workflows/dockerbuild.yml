@@ -72,7 +72,7 @@ jobs:
         uses: peter-evans/dockerhub-description@v2
         with:
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKER_TOKEN }}
           repository: ${{ env.DOCKER_IMAGE }}
 
       - name: Create release
