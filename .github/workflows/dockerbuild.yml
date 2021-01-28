@@ -52,7 +52,9 @@ jobs:
         with:
           tag-sha: true
           images: ${{ env.DOCKER_IMAGE }}
-          tag-semver: {{version}}
+          tag-semver: |
+            {{version}}
+            {{major}}.{{minor}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
