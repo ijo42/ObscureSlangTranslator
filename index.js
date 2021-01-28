@@ -8,7 +8,6 @@ global.debug = process.env.debug || false;
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
 
-const authorFieldLimit = 32;
 const commands = {
     add: {
         regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]+)(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. -]+)$/,
@@ -58,9 +57,7 @@ bot.on('polling_error', (error) => {
 
 function formatUsername(user) {
     return util.format('%s <%i>', (user.username ||
-        util.format('%s %s', user.first_name, user.last_name || '-'))
-            .substring(authorFieldLimit - user.id.length - 3), //DB Limit - two parentheses - space - ID length
-        user.id);
+        util.format('%s %s', user.first_name, user.last_name || '-')), user.id);
 }
 function capitalizeFirstLetter([first, ...rest]) {
         return first.toLocaleUpperCase() + rest.join('')
