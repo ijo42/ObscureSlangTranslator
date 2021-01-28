@@ -1,4 +1,7 @@
 name: Release Workflow
+env:
+  DOCKER_IMAGE: ${{ github.repository }}
+
 on:
   push:
     paths-ignore:
@@ -6,11 +9,15 @@ on:
       - '.git**'
     branches-ignore:
       - 'dependabot/**'
-  create:
     tags:
-      - v*
+      - 'v*'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '.git**'
     branches-ignore:
       - 'dependabot/**'
+
 jobs:
   release:
     name: Build Release
@@ -19,9 +26,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Create release
         id: create_release
-        if: github.event_name == 'create'
+        if: github.event_name != 'pull_request'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,20 +46,41 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Publish to DockerHub
-        if: github.event_name == 'create'
-        uses: elgohr/Publish-Docker-Github-Action@3.02
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
         with:
-          name: ijo42/obscureslang
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          tag_semver: true
+          tag-sha: true
+          images: ${{ env.DOCKER_IMAGE }}
+          tag-semver: {{version}}
 
-      - name: Publish to DockerHub
-        if: github.event_name == 'push'
-        uses: elgohr/Publish-Docker-Github-Action@3.02
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DOCKER
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
         with:
-          name: ijo42/obscureslang
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          snapshot: true
+          repository: ${{ env.DOCKER_IMAGE }}
