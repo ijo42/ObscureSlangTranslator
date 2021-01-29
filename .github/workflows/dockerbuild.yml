@@ -12,7 +12,7 @@ on:
   create:
     tags:
       - 'v*'
-    ref-type:
+    ref_type:
       - 'tag'
   pull_request:
     paths-ignore:
