@@ -1,15 +1,18 @@
+import {PoolClient, QueryArrayResult} from "pg";
+
 const {Pool} = require('pg')
 const pool = new Pool()
 module.exports = {
-    async query(text, params) {
+    query: async function (text: String, params: String): Promise<QueryArrayResult> {
         const start = Date.now()
         const res = await pool.query(text, params)
         const duration = Date.now() - start
+        // @ts-ignore
         if (global.debug)
             console.log('executed query', {text, duration, rows: res.rowCount})
         return res
     },
-    async getClient() {
+    getClient: async function (): Promise<PoolClient> {
         const client = await pool.connect()
         const query = client.query
         const release = client.release
@@ -19,7 +22,7 @@ module.exports = {
             console.error(`The last executed query on this client was: ${client.lastQuery}`)
         }, 5000)
         // monkey patch the query method to keep track of the last query executed
-        client.query = (...args) => {
+        client.query = (...args: any) => {
             client.lastQuery = args
             return query.apply(client, args)
         }

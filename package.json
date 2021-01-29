@@ -1,11 +1,12 @@
 {
   "name": "obscure-slang-translator",
   "version": "1.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "A little educational project. Telegram bot that translate stranger Russian slang to human language",
+  "main": "ts-node src/app.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "dev": "ts-node src/app.ts",
+    "start": "ts-node dist/app.js",
+    "build": "tsc -p ."
   },
   "keywords": [],
   "author": "ijo42 <admin@ijo42.ru>",
@@ -13,5 +14,20 @@
   "dependencies": {
     "node-telegram-bot-api": "^0.51.0",
     "pg": "^8.5.1"
-  }
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.22",
+    "@types/node-telegram-bot-api": "^0.51.0",
+    "@types/pg": "^7.14.9",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ijo42/ObscureSlangTranslator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ijo42/ObscureSlangTranslator/issues"
+  },
+  "homepage": "https://github.com/ijo42/ObscureSlangTranslator#readme"
 }

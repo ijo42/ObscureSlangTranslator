@@ -1,2 +1,7 @@
+.idea
+.github
 node_modules
-npm-debug.log
+src
+.gitignore
+tsconfig.json
+README.md
