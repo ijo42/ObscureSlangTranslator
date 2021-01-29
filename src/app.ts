@@ -1,5 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import {QueryResult} from "pg";
+import {queries} from "./db/paterns";
+import {texts} from "./texts";
+import {Command} from "./interaces/command";
 
 const db = require("./db");
 const util = require("util");
@@ -63,25 +66,3 @@ bot.onText(commands.start.regexp, (msg) => {
 bot.on('polling_error', (error) => {
     console.log(JSON.stringify(error));  // => 'EFATAL'
 });
-
-function formatUsername(user: TelegramBot.User) {
-    return util.format('%s <%i>', (user.username ||
-        util.format('%s %s', user.first_name, user.last_name || '-')), user.id);
-}
-
-function capitalizeFirstLetter([...rest]) {
-    return rest.shift().toLocaleUpperCase() + rest.join('')
-}
-
-function capitalize([...st]) {
-    return st.map(str => capitalizeFirstLetter(str));
-}
-
-const texts = {
-    dbSize: 'Currently, DB contains %s terms',
-    welcome: 'Welcome, available commands: /size'
-}
-const queries = {
-    insertTerm: 'INSERT INTO obscure(term, value, author) VALUES($1, $2, $3) RETURNING id, term',
-    lastIndex: 'SELECT max(id) FROM obscure'
-}
