@@ -15,8 +15,8 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
+COPY LICENSE ./
 COPY package*.json ./
-COPY LICENSE.md ./
 RUN npm ci --quiet --only=production
 
 COPY --from=builder /usr/src/app/dist ./dist
