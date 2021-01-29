@@ -1,7 +1,5 @@
 .idea
 .github
 node_modules
-src
 .gitignore
-tsconfig.json
 README.md
