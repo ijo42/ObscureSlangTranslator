@@ -10,5 +10,6 @@ create table obscure
         primary key (id)
 );
 
-alter table obscure owner to root;
+alter table obscure
+    owner to root;
 
