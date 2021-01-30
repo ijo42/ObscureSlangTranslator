@@ -1,4 +1,4 @@
-import {Command} from "./interaces/Command";
+import {Command} from "./templates";
 import {queries} from "./db/patterns";
 import {QueryResult} from "pg";
 import {texts} from "./texts";
