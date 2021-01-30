@@ -1,4 +1,4 @@
-import {Command} from "./templates";
+import {Command, ObscureEntry} from "./templates";
 import {queries} from "./db/patterns";
 import {QueryResult} from "pg";
 import {texts} from "./texts";
@@ -31,6 +31,9 @@ export let commands = new Map<string, Command>([
             const vars = capitalize([match[2], match[3], formatUsername(msg.from)]);
 
             db.query(queries.insertTerm, vars).then((res: QueryResult) => {
+                fuse.add(new ObscureEntry(
+                    vars.shift(), vars.shift()
+                ));
                 const row = res.rows[0];
                 if (row)
                     bot.sendMessage(chatId, util.format(texts.dbSize, row['id']));

@@ -17,9 +17,9 @@ export class ObscureEntry {
     value: string;
     synonyms: string[];
 
-    constructor(term: string, value: string, synonyms: string) {
+    constructor(term: string, value: string) {
         this.term = term;
         this.value = value;
-        this.synonyms = JSON.parse(synonyms.replace(/]\[/g, "],["));
+        this.synonyms = [];
     }
 }
