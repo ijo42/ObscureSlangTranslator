@@ -4,7 +4,7 @@ import {QueryResult} from "pg";
 import {texts} from "./texts";
 import * as util from "util";
 import {bot} from "./app";
-import {capitalize, formatUsername} from "./utils/formatting";
+import {capitalize, formatAnswer, formatUsername} from "./utils/formatting";
 import {fuse} from "./utils/fuzzySearch";
 
 const db = require("./db");
@@ -45,5 +45,15 @@ export let commands = new Map<string, Command>([
     ["start", new Command(/\/start/, 'Welcome-Command',
         (msg) => {
             bot.sendMessage(msg.chat.id, texts.welcome);
+        })],
+    ["get", new Command(/\/get ([a-zA-Z0-9_а-яА-Я]+)/, 'test-purpose',
+        (msg, match) => {
+            if (match && match[1]) {
+                const [first] = fuse.search(match[1]);
+                if (first) {
+                    bot.sendMessage(msg.chat.id, formatAnswer(first.item));
+                } else
+                    bot.sendMessage(msg.chat.id, "IDK");
+            }
         })]
 ]);
