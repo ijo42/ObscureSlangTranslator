@@ -4,7 +4,7 @@ import {QueryResult} from "pg";
 import {texts} from "./texts";
 import * as util from "util";
 import {bot} from "./app";
-import {capitalize, formatUsername} from "./utils";
+import {capitalize, formatUsername} from "./utils/formatting";
 
 const db = require("./db");
 
