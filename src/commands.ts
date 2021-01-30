@@ -5,7 +5,7 @@ import {texts} from "./texts";
 import * as util from "util";
 import {bot} from "./app";
 import {capitalize, formatUsername} from "./utils/formatting";
-import {obscureCache} from "./cacheManager";
+import {fuse} from "./utils/fuzzySearch";
 
 const db = require("./db");
 
