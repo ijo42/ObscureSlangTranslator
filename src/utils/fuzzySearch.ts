@@ -13,7 +13,7 @@ const options = {
 
         {
             name: 'value',
-            weight: 0.4
+            weight: 0.6
         },
         {
             name: 'synonyms',
@@ -32,13 +32,18 @@ export default function setup(): void {
 }
 
 export const fuzzySearch = (query: string[] | null) => {
-    if (query)
+    let entry: Fuse.FuseResult<ObscureEntry> | undefined;
+    if (query) {
         for (let q of query) {
             const [first] = fuse.search(q);
-            if (first)
-                return first.item;
+            if (first &&
+                (entry === undefined || (entry.score === undefined || first.score &&
+                    first.score < entry.score)))
+                entry = first;
         }
-    return false;
+    }
+
+    return entry?.item;
 }
 
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
