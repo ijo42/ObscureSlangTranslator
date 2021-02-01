@@ -8,6 +8,7 @@ const db = require("../db")
 
 const options = {
     includeScore: true,
+    minMatchCharLength: 2,
     threshold: 0.55,
     useExtendedSearch: true,
     keys: [
