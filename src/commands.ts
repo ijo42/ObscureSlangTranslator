@@ -32,17 +32,18 @@ export let commands = new Map<string, Command>([
             const fuzzy = fuzzySearch(vars);
             vars.push(formatUsername(msg.from));
             if (fuzzy)
-                bot.sendMessage(chatId, util.format('Are you sure that this is not a duplicate for \n%s\nIf mistake, reply \`FORCE\`', formatAnswer(fuzzy)), {
+                bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
+*${formatAnswer(fuzzy)}*
+If mistake\, reply \`FORCE\``, {
                     reply_markup: {
                         force_reply: true,
-                    }
+                    }, parse_mode: "MarkdownV2"
                 }).then(answer => {
                     const onReplyToMessage = bot.onReplyToMessage(answer.chat.id, answer.message_id, msg => {
                         bot.removeReplyListener(onReplyToMessage);
                         if (msg.text === "FORCE") processReplenishment(vars, msg.chat.id);
                     });
-                });
-            else
+                }); else
                 processReplenishment(vars, chatId);
         })],
 
@@ -52,7 +53,9 @@ export let commands = new Map<string, Command>([
         })],
     ["get", new Command(/\/get ([a-zA-Z0-9_а-яА-Я ]+)/, 'Get Fuzzy Terms',
         (msg, match) => {
-            bot.sendMessage(msg.chat.id, fuzzyFormat(match));
+            bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
+                parse_mode: "MarkdownV2"
+            });
         })]
 ]);
 
@@ -65,6 +68,6 @@ function processReplenishment(vars: any, chatId: number) {
         if (row)
             bot.sendMessage(chatId, util.format(texts.dbSize, row['id']));
         else
-            console.error("res.rows[0] is null: ", JSON.stringify(res));
+            console.error(`res.rows[0] is null: ${JSON.stringify(res)}`);
     }).catch((e: any) => console.error(e.stack));
 }

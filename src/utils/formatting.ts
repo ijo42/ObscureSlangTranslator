@@ -2,12 +2,13 @@ import TelegramBot from "node-telegram-bot-api";
 import * as util from "util";
 import {ObscureEntry} from "../templates";
 
-export const formatUsername = (user: TelegramBot.User) =>
-    util.format('%s <%i>', (user.username ||
-        util.format('%s %s', user.first_name, user.last_name || '\-')), user.id);
+export const formatUsername = (user: TelegramBot.User) => {
+    return util.format(`%s <${user.id}>`, user.username ||
+        `${user.first_name} ${user.last_name || '-'}`);
+};
 
 export const formatAnswer = (entry: ObscureEntry) =>
-    util.format('%s \- %s', entry.term, entry.value)
+    `${entry.term} - ${entry.value}`.replace(/([,.\-])/g, "\\$1")
 
 export const capitalizeFirstLetter = ([...rest]) =>
     rest.shift().toLocaleUpperCase() + rest.join('');

@@ -39,5 +39,5 @@ export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined
 
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
     const entry = fuzzySearch(query);
-    return entry ? formatAnswer(entry) : "IDK";
+    return entry ? formatAnswer(entry) : "*IDK*";
 }
