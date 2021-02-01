@@ -25,7 +25,7 @@ export let commands = new Map<string, Command>([
     ["add", new Command(/^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. -]{2,})$/,
         'Main upload command',
         (msg, match) => {
-            if (!match || !msg.from || (msg.chat.type !== 'private' && match[1] === undefined))
+            if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = capitalize([match[2], match[3]]);
@@ -37,11 +37,9 @@ export let commands = new Map<string, Command>([
                         force_reply: true,
                     }
                 }).then(answer => {
-                    bot.onReplyToMessage(answer.chat.id, answer.message_id, msg => {
-                        if (msg.text === "FORCE") {
-                            processReplenishment(vars, msg.chat.id);
-                            bot.deleteMessage(answer.chat.id, String(answer.message_id)) // ONLY 48 HOURS
-                        }
+                    const onReplyToMessage = bot.onReplyToMessage(answer.chat.id, answer.message_id, msg => {
+                        bot.removeReplyListener(onReplyToMessage);
+                        if (msg.text === "FORCE") processReplenishment(vars, msg.chat.id);
                     });
                 });
             else
