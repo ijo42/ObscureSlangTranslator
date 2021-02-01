@@ -8,21 +8,22 @@ const db = require("../db")
 
 const options = {
     includeScore: true,
+    threshold: 0.55,
+    useExtendedSearch: true,
     keys: [
         'term',
 
         {
             name: 'value',
-            weight: 0.6
+            weight: 0.5
         },
         {
             name: 'synonyms',
-            weight: 0.9
+            weight: 0.85
         }
     ]
 }
 
-// initialize Fuse with the index
 export let fuse: Fuse<ObscureEntry>;
 
 export default function setup(): void {
@@ -31,25 +32,11 @@ export default function setup(): void {
     }).catch((e: any) => console.error(e.stack));
 }
 
-export const fuzzySearch = (query: string[] | null) => {
-    let entry: Fuse.FuseResult<ObscureEntry> | undefined;
-    if (query) {
-        for (let q of query) {
-            const [first] = fuse.search(q);
-            if (first &&
-                (entry === undefined || (entry.score === undefined || first.score &&
-                    first.score < entry.score)))
-                entry = first;
-        }
-    }
-
-    return entry?.item;
+export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined = (query: string[] | null) => {
+    return query ? fuse.search(query.join(' | '))[0]?.item : undefined;
 }
 
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
     const entry = fuzzySearch(query);
-    if (entry)
-        return formatAnswer(entry);
-    else
-        return "IDK";
+    return entry ? formatAnswer(entry) : "IDK";
 }

@@ -52,7 +52,7 @@ export let commands = new Map<string, Command>([
         (msg) => {
             bot.sendMessage(msg.chat.id, texts.welcome);
         })],
-    ["get", new Command(/\/get ([a-zA-Z0-9_а-яА-Я]+)/, 'Get Fuzzy Terms',
+    ["get", new Command(/\/get ([a-zA-Z0-9_а-яА-Я ]+)/, 'Get Fuzzy Terms',
         (msg, match) => {
             bot.sendMessage(msg.chat.id, fuzzyFormat(match));
         })]
