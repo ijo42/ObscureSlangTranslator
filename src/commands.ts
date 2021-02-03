@@ -41,7 +41,7 @@ If mistake\, reply \`FORCE\``, {
                 }).then(answer => {
                     const onReplyToMessage = bot.onReplyToMessage(answer.chat.id, answer.message_id, msg => {
                         bot.removeReplyListener(onReplyToMessage);
-                        if (msg.text === "FORCE") processReplenishment(vars, msg.chat.id);
+                        if (msg.text?.toUpperCase() === "FORCE") processReplenishment(vars, msg.chat.id);
                     });
                 }); else
                 processReplenishment(vars, chatId);
