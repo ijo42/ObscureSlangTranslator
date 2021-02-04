@@ -22,7 +22,7 @@ export let commands = new Map<string, Command>([
             })
         }))],
 
-    ["add", new Command(/^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,. -)(]{2,})$/,
+    ["add", new Command(/^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,.\-)( ]{2,})$/,
         'Main upload command',
         (msg, match) => {
             if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
