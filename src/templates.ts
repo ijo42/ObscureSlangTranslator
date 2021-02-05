@@ -1,15 +1,10 @@
-import * as tg from "node-telegram-bot-api";
+import { CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
 
-export class Command {
+export interface Command {
     regexp: RegExp;
     desk: string;
-    callback: ((msg: tg.Message, match: RegExpExecArray | null) => void)
+    callback: ((msg: Message, match: RegExpExecArray | null) => void)
 
-    constructor(regexp: RegExp, desk: string, callback: (msg: tg.Message, match: (RegExpExecArray | null)) => void) {
-        this.regexp = regexp;
-        this.desk = desk;
-        this.callback = callback;
-    }
 }
 
 export class ObscureEntry {
@@ -24,19 +19,11 @@ export class ObscureEntry {
     }
 }
 
-interface KeyboardButton extends tg.InlineKeyboardButton {
-    text: string;
-    url?: string;
-    login_url?: tg.LoginUrl;
-    callback_data?: string;
-    switch_inline_query?: string;
-    switch_inline_query_current_chat?: string;
-    callback_game?: tg.CallbackGame;
-    pay?: boolean;
-    callback: (query: tg.CallbackQuery) => void;
+interface KeyboardButton extends InlineKeyboardButton {
+    callback: (query: CallbackQuery) => void;
 }
 
-export interface Keyboard extends tg.InlineKeyboardMarkup {
+export interface Keyboard extends InlineKeyboardMarkup {
     inline_keyboard: KeyboardButton[][];
 }
 
