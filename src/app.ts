@@ -23,3 +23,7 @@ bot.on('new_chat_members', (msg) => {
 bot.on('polling_error', (error) => {
     console.log(JSON.stringify(error));  // => 'EFATAL'
 });
+
+bot.on('callback_query', query => {
+    if (query.message) processQuery(query);
+})

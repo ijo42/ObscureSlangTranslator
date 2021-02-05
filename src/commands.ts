@@ -6,8 +6,10 @@ import * as util from "util";
 import { bot } from "./app";
 import { capitalize, formatAnswer, formatUsername } from "./utils/formatting";
 import { fuse, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
+import { registerCallback } from "./inLineHandler";
 
 const db = require("./db");
+const markup = require("./templates");
 
 export let commands = new Map<string, Command>([
     ["size", new Command(/\/size/, 'Get last DB index',
