@@ -8,16 +8,10 @@ export interface Command {
 
 }
 
-export class ObscureEntry {
+export interface ObscureEntry {
     term: string;
     value: string;
     synonyms: string[];
-
-    constructor(term: string, value: string) {
-        this.term = term;
-        this.value = value;
-        this.synonyms = [];
-    }
 }
 
 interface KeyboardButton extends InlineKeyboardButton {

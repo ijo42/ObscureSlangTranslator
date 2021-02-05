@@ -1,4 +1,4 @@
-import { Command, ObscureEntry } from "./templates";
+import { Command } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
@@ -73,9 +73,12 @@ If mistake\, click \`Force\``, {
 
 function processReplenishment(vars: any, chatId: number) {
     db.query(queries.insertTerm, vars).then((res: QueryResult) => {
-        fuse.add(new ObscureEntry(
-            vars[0], vars[1]
-        ));
+        fuse.add({
+                term: vars[0],
+                value: vars[1],
+                synonyms: []
+            }
+        );
         const row = res.rows[0];
         if (row)
             bot.sendMessage(chatId, util.format(texts.dbSize, row['id']));
