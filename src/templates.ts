@@ -1,4 +1,5 @@
 import { CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
+import { bot } from "./app";
 
 export interface Command {
     regexp: RegExp;
@@ -28,6 +29,20 @@ export interface Keyboard extends InlineKeyboardMarkup {
 }
 
 module.exports = {
+    forceUpload: function (onForce: () => void): Keyboard {
+        return {
+            inline_keyboard: [
+                [{
+                    text: 'Force', callback_data: 'F',
+                    callback: (query) => {
+                        onForce();
+                        bot.answerCallbackQuery(query.id);
+                    }
+                }]
+            ]
+        }
+
+    },
     moderateMarkup: function (_vars: string[]): Keyboard {
         return {
             inline_keyboard: [

@@ -3,7 +3,7 @@ import { PoolClient, QueryArrayResult } from "pg";
 const {Pool} = require('pg')
 const pool = new Pool()
 module.exports = {
-    query: async function (text: String, params: String): Promise<QueryArrayResult> {
+    query: async function (text: String, params: String) {
         const start = Date.now()
         const res = await pool.query(text, params)
         const duration = Date.now() - start
