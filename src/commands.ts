@@ -1,11 +1,11 @@
-import {Command, ObscureEntry} from "./templates";
-import {queries} from "./db/patterns";
-import {QueryResult} from "pg";
-import {texts} from "./texts";
+import { Command, ObscureEntry } from "./templates";
+import { queries } from "./db/patterns";
+import { QueryResult } from "pg";
+import { texts } from "./texts";
 import * as util from "util";
-import {bot} from "./app";
-import {capitalize, formatAnswer, formatUsername} from "./utils/formatting";
-import {fuse, fuzzyFormat, fuzzySearch} from "./utils/fuzzySearch";
+import { bot } from "./app";
+import { capitalize, formatAnswer, formatUsername } from "./utils/formatting";
+import { fuse, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 
 const db = require("./db");
 

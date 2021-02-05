@@ -1,4 +1,4 @@
-import {PoolClient, QueryArrayResult} from "pg";
+import { PoolClient, QueryArrayResult } from "pg";
 
 const {Pool} = require('pg')
 const pool = new Pool()

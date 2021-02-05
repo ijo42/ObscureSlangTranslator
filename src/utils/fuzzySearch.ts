@@ -1,8 +1,8 @@
 import Fuse from "fuse.js";
-import {queries} from "../db/patterns";
-import {QueryResult} from "pg";
-import {ObscureEntry} from "../templates";
-import {formatAnswer} from "./formatting";
+import { queries } from "../db/patterns";
+import { QueryResult } from "pg";
+import { ObscureEntry } from "../templates";
+import { formatAnswer } from "./formatting";
 
 const db = require("../db")
 

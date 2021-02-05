@@ -1,7 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
-import {texts} from "./texts";
-import {commands} from "./commands";
+import { texts } from "./texts";
+import { commands } from "./commands";
 import setupCache from "./utils/fuzzySearch";
+import { processQuery } from "./inLineHandler";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';

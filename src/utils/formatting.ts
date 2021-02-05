@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import * as util from "util";
-import {ObscureEntry} from "../templates";
+import { ObscureEntry } from "../templates";
 
 export const formatUsername = (user: TelegramBot.User) => {
     return util.format(`%s <${user.id}>`, user.username ||
