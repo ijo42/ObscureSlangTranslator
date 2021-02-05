@@ -1,5 +1,3 @@
-import { PoolClient, QueryArrayResult } from "pg";
-
 const {Pool} = require('pg')
 const pool = new Pool()
 module.exports = {
@@ -12,7 +10,7 @@ module.exports = {
             console.log('executed query', {text, duration, rows: res.rowCount})
         return res
     },
-    getClient: async function (): Promise<PoolClient> {
+    getClient: async function () {
         const client = await pool.connect()
         const query = client.query
         const release = client.release
