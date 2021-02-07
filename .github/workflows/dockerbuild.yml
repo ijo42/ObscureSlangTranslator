@@ -7,13 +7,9 @@ on:
     paths-ignore:
       - '**.md'
       - '.git**'
-    branches-ignore:
-      - 'dependabot/**'
   create:
     tags:
       - 'v*'
-    ref_type:
-      - 'tag'
   pull_request:
     paths-ignore:
       - '**.md'
@@ -71,7 +67,7 @@ jobs:
 
       - name: Create release
         id: create_release
-        if: ${{ github.event_name == 'create' }}
+        if: ${{ github.event_name == 'create' && github.event.ref_type == 'tag' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
