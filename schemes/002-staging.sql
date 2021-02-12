@@ -7,7 +7,7 @@ create table staging
     term        text                                     not null,
     value       text                                     not null,
     user_id     integer                                  not null,
-    revived_by  integer,
+    reviewed_by integer,
     accepted_as integer,
     constraint staging_pk
         primary key (id)
