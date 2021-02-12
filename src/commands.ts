@@ -42,12 +42,10 @@ export let commands = new Map<string, Command>([
                 const keyboard = markup.forceUpload(() => processReplenishment(vars, msg.chat.id));
                 bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
-If mistake\, click \`Force\``, {
+If mistake, click \`Force\``, {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2"
-                }).then(answer => {
-                    registerCallback(answer, keyboard);
-                });
+                }).then(answer => registerCallback(answer, keyboard));
             } else
                 processReplenishment(vars, chatId);
         }

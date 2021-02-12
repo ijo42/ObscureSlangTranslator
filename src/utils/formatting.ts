@@ -8,10 +8,13 @@ export const formatUsername = (user: TelegramBot.User) => {
 };
 
 export const formatAnswer = (entry: ObscureEntry) =>
-    `${entry.term} - ${entry.value}`.replace(/([,.\-])/g, "\\$1")
+    precedeChar(`${entry.term} - ${entry.value}`);
 
 export const capitalizeFirstLetter = ([...rest]) =>
     rest.shift().toLocaleUpperCase() + rest.join('');
 
 export const capitalize: ([...st]: readonly any[]) => any = ([...st]) =>
     st.map(str => capitalizeFirstLetter(str));
+
+export const precedeChar: (s: string) => string = (s: string) =>
+    s.replace(/([_\]\[)(~>#+\-=|}{.!])/gm, `\\$1`);
