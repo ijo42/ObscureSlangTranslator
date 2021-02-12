@@ -6,7 +6,7 @@ create table staging
     updated     timestamp      default CURRENT_TIMESTAMP not null,
     term        text                                     not null,
     value       text                                     not null,
-    user_id     integer                                  not null,
+    author      text                                     not null,
     reviewed_by integer,
     accepted_as integer,
     constraint staging_pk
