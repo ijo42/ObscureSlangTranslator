@@ -5,13 +5,18 @@ export interface Command {
     regexp: RegExp;
     desk: string;
     callback: ((msg: Message, match: RegExpExecArray | null) => void)
-
 }
 
 export interface ObscureEntry {
     term: string;
     value: string;
     synonyms: string[];
+}
+
+export interface ModerateAction extends ObscureEntry {
+    stagingId: number;
+    author: string;
+    reviewer: number;
 }
 
 interface KeyboardButton extends InlineKeyboardButton {
