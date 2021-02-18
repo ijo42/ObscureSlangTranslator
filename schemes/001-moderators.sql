@@ -7,9 +7,6 @@ create table moderators
         primary key (id)
 );
 
-alter table moderators
-    owner to root;
-
 create unique index moderators_id_uindex
     on moderators (id);
 

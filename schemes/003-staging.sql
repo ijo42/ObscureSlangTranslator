@@ -13,9 +13,6 @@ create table staging
         primary key (id)
 );
 
-alter table staging
-    owner to root;
-
 create unique index staging_id_uindex
     on staging (id);
 
