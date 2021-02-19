@@ -27,4 +27,4 @@ export const grabUsrID: (s: string) => string = (s: string) =>
     s.slice(s.lastIndexOf('<') + 1, s.lastIndexOf('>'));
 
 export const formatDBSize = (s: string | number) =>
-    util.format(texts.dbSize, s.toString);
+    util.format(texts.dbSize, s.toString());
