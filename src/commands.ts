@@ -72,6 +72,7 @@ If mistake, click \`Force\``, {
 function processReplenishment(vars: any, chatId: number) {
     db.query(queries.insertTerm, vars).then((res: QueryResult) => {
         fuse.add({
+                id: res.rows[0].id,
                 term: vars[0],
                 value: vars[1],
                 synonyms: []

@@ -2,7 +2,7 @@ import { CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } fr
 import { bot } from "./app";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
-import { fuse } from "./utils/fuzzySearch";
+import { fuse, fuzzySearchWithLen } from "./utils/fuzzySearch";
 import { formatAnswer, grabUsrID } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
@@ -24,6 +24,7 @@ export interface Command {
 }
 
 export interface ObscureEntry {
+    id: number;
     term: string;
     value: string;
     synonyms: string[];
