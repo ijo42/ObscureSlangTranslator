@@ -45,6 +45,14 @@ export interface Keyboard extends InlineKeyboardMarkup {
     inline_keyboard: KeyboardButton[][];
 }
 
+export function processReplenishment(entry: ObscureEntry, author: string): Promise<QueryResult> {
+    return db.query(queries.insertTerm, [entry.term, entry.value, author]).then((res: QueryResult) => {
+        entry.id = res.rows[0].id
+        fuse.add(entry);
+        return Promise.resolve(res);
+    }).catch((e: any) => console.error(e.stack));
+}
+
 module.exports = {
     forceUpload: function (onForce: () => void): Keyboard {
         return {
@@ -84,12 +92,7 @@ module.exports = {
                         text: 'ACCEPT',
                         callback_data: 'A',
                         callback: () => {
-                            db.query(queries.insertTerm, [match.term, match.value, match.author]).then((res: QueryResult) => {
-                                fuse.add(match);
-
-                                if (!res.rows[0])
-                                    console.error(`res.rows[0] is null: ${JSON.stringify(res)}`);
-
+                            processReplenishment(match, match.author).then((res: QueryResult) => {
                                 db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
                                     bot.sendMessage(match.reviewer, "Successful accepted");
                                     bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
@@ -97,8 +100,7 @@ module.exports = {
                                     });
                                 }).catch((e: any) =>
                                     bot.sendMessage(match.reviewer, e.stack));
-
-                            }).catch((e: any) => console.error(e.stack));
+                            })
                         }
                     },
                     {

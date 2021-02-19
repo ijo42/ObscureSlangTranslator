@@ -1,11 +1,10 @@
-import { Command } from "./templates";
+import { Command, ObscureEntry, processReplenishment } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
-import * as util from "util";
 import { bot } from "./app";
-import { capitalize, formatAnswer, formatUsername } from "./utils/formatting";
-import { fuse, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
+import { capitalize, formatAnswer, formatDBSize, formatUsername } from "./utils/formatting";
+import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 
 const db = require("./db");
@@ -20,7 +19,7 @@ export let commands = new Map<string, Command>([
             db.query(queries.lastIndex).then((res: QueryResult) => {
                 const reElement = res.rows[0];
                 if (reElement)
-                    bot.sendMessage(chatId, util.format(texts.dbSize, reElement['max']));
+                    bot.sendMessage(chatId, formatDBSize(reElement['max']));
                 else
                     console.error("res.rows[0] is null: ", JSON.stringify(res));
             })
@@ -37,9 +36,18 @@ export let commands = new Map<string, Command>([
             const chatId = msg.chat.id;
             const vars: string[] = capitalize([match[2], match[3]]);
             const fuzzy = fuzzySearch(vars);
-            vars.push(formatUsername(msg.from));
+            const entry: ObscureEntry = {
+                id: -1, synonyms: [],
+                term: <string>vars[0],
+                value: <string>vars[1]
+            };
+            const upload = () => {
+                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '').then(value =>
+                    bot.sendMessage(msg.chat.id, formatDBSize(value.rows[0].id)));
+            }
+
             if (fuzzy) {
-                const keyboard = markup.forceUpload(() => processReplenishment(vars, msg.chat.id));
+                const keyboard = markup.forceUpload(upload);
                 bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
 If mistake, click \`Force\``, {
@@ -47,7 +55,7 @@ If mistake, click \`Force\``, {
                     parse_mode: "MarkdownV2"
                 }).then(answer => registerCallback(answer, keyboard));
             } else
-                processReplenishment(vars, chatId);
+                upload();
         }
     }
     ],
@@ -68,20 +76,3 @@ If mistake, click \`Force\``, {
         }
     }]
 ]);
-
-function processReplenishment(vars: any, chatId: number) {
-    db.query(queries.insertTerm, vars).then((res: QueryResult) => {
-        fuse.add({
-                id: res.rows[0].id,
-                term: vars[0],
-                value: vars[1],
-                synonyms: []
-            }
-        );
-        const row = res.rows[0];
-        if (row)
-            bot.sendMessage(chatId, util.format(texts.dbSize, row['id']));
-        else
-            console.error(`res.rows[0] is null: ${JSON.stringify(res)}`);
-    }).catch((e: any) => console.error(e.stack));
-}
