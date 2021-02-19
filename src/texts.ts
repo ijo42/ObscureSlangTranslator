@@ -4,7 +4,7 @@ export const texts = {
     moderateAnnounce: {
         accepted: 'Your term, `%s`, successful accepted',
         declined: 'Your term, `%s`, declined',
-        synonym: 'Your term, `%s`, marked as synonym',
+        synonym: 'Your term, `%s`, marked as synonym to `%s`',
         request_changes: 'Moderator requested changes to your term, `%s`',
     }
 }

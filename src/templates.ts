@@ -60,6 +60,22 @@ module.exports = {
         }
 
     },
+    synonymMarkup: function (s: string[], run: ((s: number) => void)): Keyboard {
+        let keyboard: Keyboard = {
+            inline_keyboard: [[], [], []]
+        };
+        for (let i = 0; i < s.length; i++) {
+            if (!s[i])
+                continue;
+
+            keyboard.inline_keyboard[i]?.push({
+                text: <string>s[i],
+                callback_data: `S${i}`,
+                callback: () => run(i)
+            });
+        }
+        return keyboard;
+    },
     moderateMarkup: function (match: ModerateAction): Keyboard {
         return {
             inline_keyboard: [
@@ -117,7 +133,34 @@ module.exports = {
                         text: 'SYNONYM',
                         callback_data: 'S',
                         callback: () => {
-                            bot.sendMessage(match.reviewer, "Not yet implemented");
+                            const matchedEnters: ObscureEntry[] = fuzzySearchWithLen([match.term, match.value], 3).filter(value => value.value != undefined);
+                            const possibleEnters = matchedEnters.map((value: ObscureEntry) => formatAnswerUnpreceded(value));
+
+                            const replyMarkup = this.synonymMarkup(possibleEnters, (entryID: number) => {
+                                const matched = matchedEnters[entryID];
+                                if (!matched || !matched.id) {
+                                    console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
+                                    return;
+                                }
+                                db.query(queries.insertSynonym, [match.term, matched.id]).then((res: QueryResult) => {
+                                    db.query(queries.updateStaging, [StagingStatus.SYNONYM, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
+                                        fuse.remove((doc: ObscureEntry) => matched == doc)
+                                        matched.synonyms.push(match.term);
+                                        fuse.add(matched);
+
+                                        bot.sendMessage(match.reviewer, "Successful marked as Synonym");
+                                        bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
+                                            parse_mode: "MarkdownV2"
+                                        });
+                                    }).catch((e: any) =>
+                                        bot.sendMessage(match.reviewer, e.stack));
+                                }).catch((e: any) =>
+                                    bot.sendMessage(match.reviewer, e.stack));
+                            });
+
+                            bot.sendMessage(match.reviewer, "Select Synonym", {
+                                reply_markup: replyMarkup
+                            }).then(value => registerCallback(value, replyMarkup));
                         }
                     }
                 ]
