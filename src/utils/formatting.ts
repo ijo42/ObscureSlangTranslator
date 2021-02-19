@@ -7,8 +7,11 @@ export const formatUsername = (user: TelegramBot.User) => {
         `${user.first_name} ${user.last_name || '-'}`);
 };
 
+export const formatAnswerUnpreceded = (entry: ObscureEntry) =>
+    `${entry.term} - ${entry.value}`;
+
 export const formatAnswer = (entry: ObscureEntry) =>
-    precedeChar(`${entry.term} - ${entry.value}`);
+    precedeChar(formatAnswerUnpreceded(entry));
 
 export const capitalizeFirstLetter = ([...rest]) =>
     rest.shift().toLocaleUpperCase() + rest.join('');

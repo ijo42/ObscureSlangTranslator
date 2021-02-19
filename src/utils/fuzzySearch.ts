@@ -33,8 +33,12 @@ export default function setup(): void {
     }).catch((e: any) => console.error(e.stack));
 }
 
+export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => {
+    return query ? fuse.search(query.join(' | ')).slice(0, num).map(value => value.item) : [];
+}
+
 export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined = (query: string[] | null) => {
-    return query ? fuse.search(query.join(' | '))[0]?.item : undefined;
+    return fuzzySearchWithLen(query, 1)[0];
 }
 
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
