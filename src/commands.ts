@@ -1,4 +1,4 @@
-import { Command, ObscureEntry, processReplenishment } from "./templates";
+import { Command, forceUpload, ObscureEntry, processReplenishment } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
@@ -8,7 +8,6 @@ import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 
 const db = require("./db");
-const markup = require("./templates");
 
 export let commands = new Map<string, Command>([
     ["size", {
@@ -47,7 +46,7 @@ export let commands = new Map<string, Command>([
             }
 
             if (fuzzy) {
-                const keyboard = markup.forceUpload(upload);
+                const keyboard = forceUpload(upload);
                 bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
 If mistake, click \`Force\``, {

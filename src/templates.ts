@@ -53,120 +53,120 @@ export function processReplenishment(entry: ObscureEntry, author: string): Promi
     }).catch((e: any) => console.error(e.stack));
 }
 
-module.exports = {
-    forceUpload: function (onForce: () => void): Keyboard {
-        return {
-            inline_keyboard: [
-                [{
-                    text: 'Force', callback_data: 'F',
-                    callback: (query) => {
-                        onForce();
-                        bot.answerCallbackQuery(query.id);
+export function forceUpload(onForce: () => void): Keyboard {
+    return {
+        inline_keyboard: [
+            [{
+                text: 'Force', callback_data: 'F',
+                callback: (query) => {
+                    onForce();
+                    bot.answerCallbackQuery(query.id);
+                }
+            }]
+        ]
+    }
+
+}
+
+export function synonymMarkup(s: string[], run: ((s: number) => void)): Keyboard {
+    let keyboard: Keyboard = {
+        inline_keyboard: [[], [], []]
+    };
+    for (let i = 0; i < s.length; i++) {
+        if (!s[i])
+            continue;
+
+        keyboard.inline_keyboard[i]?.push({
+            text: <string>s[i],
+            callback_data: `S${i}`,
+            callback: () => run(i)
+        });
+    }
+    return keyboard;
+}
+
+export function moderateMarkup(match: ModerateAction): Keyboard {
+    return {
+        inline_keyboard: [
+            [
+                {
+                    text: 'ACCEPT',
+                    callback_data: 'A',
+                    callback: () => {
+                        processReplenishment(match, match.author).then((res: QueryResult) => {
+                            db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
+                                bot.sendMessage(match.reviewer, "Successful accepted");
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                                    parse_mode: "MarkdownV2"
+                                });
+                            }).catch((e: any) =>
+                                bot.sendMessage(match.reviewer, e.stack));
+                        })
                     }
-                }]
-            ]
-        }
+                },
+                {
+                    text: 'DECLINE',
+                    callback_data: 'D',
+                    callback: () => {
+                        db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
+                            bot.sendMessage(match.reviewer, "Successful declined");
+                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
+                                parse_mode: "MarkdownV2"
+                            });
+                        }).catch((e: any) =>
+                            bot.sendMessage(match.reviewer, e.stack));
+                    }
+                }
+            ],
+            [
+                {
+                    text: 'REQUEST CHANGES',
+                    callback_data: 'R',
+                    callback: () => {
+                        db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
+                            bot.sendMessage(match.reviewer, "Successful requested");
+                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
+                                parse_mode: "MarkdownV2"
+                            });
+                        }).catch((e: any) =>
+                            bot.sendMessage(match.reviewer, e.stack));
+                    }
+                },
+                {
+                    text: 'SYNONYM',
+                    callback_data: 'S',
+                    callback: () => {
+                        const matchedEnters: ObscureEntry[] = fuzzySearchWithLen([match.term, match.value], 3).filter(value => value.value != undefined);
+                        const possibleEnters = matchedEnters.map((value: ObscureEntry) => formatAnswerUnpreceded(value));
 
-    },
-    synonymMarkup: function (s: string[], run: ((s: number) => void)): Keyboard {
-        let keyboard: Keyboard = {
-            inline_keyboard: [[], [], []]
-        };
-        for (let i = 0; i < s.length; i++) {
-            if (!s[i])
-                continue;
+                        const replyMarkup = synonymMarkup(possibleEnters, (entryID: number) => {
+                            const matched = matchedEnters[entryID];
+                            if (!matched || !matched.id) {
+                                console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
+                                return;
+                            }
+                            db.query(queries.insertSynonym, [match.term, matched.id]).then(() => {
+                                db.query(queries.updateStaging, [StagingStatus.SYNONYM, match.reviewer, matched.id, match.stagingId]).then(() => {
+                                    fuse.remove((doc: ObscureEntry) => matched == doc)
+                                    matched.synonyms.push(match.term);
+                                    fuse.add(matched);
 
-            keyboard.inline_keyboard[i]?.push({
-                text: <string>s[i],
-                callback_data: `S${i}`,
-                callback: () => run(i)
-            });
-        }
-        return keyboard;
-    },
-    moderateMarkup: function (match: ModerateAction): Keyboard {
-        return {
-            inline_keyboard: [
-                [
-                    {
-                        text: 'ACCEPT',
-                        callback_data: 'A',
-                        callback: () => {
-                            processReplenishment(match, match.author).then((res: QueryResult) => {
-                                db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
-                                    bot.sendMessage(match.reviewer, "Successful accepted");
-                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                                    bot.sendMessage(match.reviewer, "Successful marked as Synonym");
+                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
                                         parse_mode: "MarkdownV2"
                                     });
                                 }).catch((e: any) =>
                                     bot.sendMessage(match.reviewer, e.stack));
-                            })
-                        }
-                    },
-                    {
-                        text: 'DECLINE',
-                        callback_data: 'D',
-                        callback: () => {
-                            db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
-                                bot.sendMessage(match.reviewer, "Successful declined");
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
-                                    parse_mode: "MarkdownV2"
-                                });
                             }).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
-                        }
+                        });
+
+                        bot.sendMessage(match.reviewer, "Select Synonym", {
+                            reply_markup: replyMarkup
+                        }).then(value => registerCallback(value, replyMarkup));
                     }
-                ],
-                [
-                    {
-                        text: 'REQUEST CHANGES',
-                        callback_data: 'R',
-                        callback: () => {
-                            db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
-                                bot.sendMessage(match.reviewer, "Successful requested");
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
-                                    parse_mode: "MarkdownV2"
-                                });
-                            }).catch((e: any) =>
-                                bot.sendMessage(match.reviewer, e.stack));
-                        }
-                    },
-                    {
-                        text: 'SYNONYM',
-                        callback_data: 'S',
-                        callback: () => {
-                            const matchedEnters: ObscureEntry[] = fuzzySearchWithLen([match.term, match.value], 3).filter(value => value.value != undefined);
-                            const possibleEnters = matchedEnters.map((value: ObscureEntry) => formatAnswerUnpreceded(value));
-
-                            const replyMarkup = this.synonymMarkup(possibleEnters, (entryID: number) => {
-                                const matched = matchedEnters[entryID];
-                                if (!matched || !matched.id) {
-                                    console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
-                                    return;
-                                }
-                                db.query(queries.insertSynonym, [match.term, matched.id]).then((res: QueryResult) => {
-                                    db.query(queries.updateStaging, [StagingStatus.SYNONYM, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
-                                        fuse.remove((doc: ObscureEntry) => matched == doc)
-                                        matched.synonyms.push(match.term);
-                                        fuse.add(matched);
-
-                                        bot.sendMessage(match.reviewer, "Successful marked as Synonym");
-                                        bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
-                                            parse_mode: "MarkdownV2"
-                                        });
-                                    }).catch((e: any) =>
-                                        bot.sendMessage(match.reviewer, e.stack));
-                                }).catch((e: any) =>
-                                    bot.sendMessage(match.reviewer, e.stack));
-                            });
-
-                            bot.sendMessage(match.reviewer, "Select Synonym", {
-                                reply_markup: replyMarkup
-                            }).then(value => registerCallback(value, replyMarkup));
-                        }
-                    }
-                ]
+                }
             ]
-        }
+        ]
     }
 }
