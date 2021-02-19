@@ -3,6 +3,9 @@ import { bot } from "./app";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { fuse } from "./utils/fuzzySearch";
+import { formatAnswer, grabUsrID } from "./utils/formatting";
+import { texts } from "./texts";
+import { format } from "util";
 
 const db = require("./db");
 
@@ -69,8 +72,10 @@ module.exports = {
                                 if (!res.rows[0])
                                     console.error(`res.rows[0] is null: ${JSON.stringify(res)}`);
 
-                                db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() =>
-                                    bot.sendMessage(match.reviewer, "Successful accepted")).catch((e: any) =>
+                                db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
+                                    bot.sendMessage(match.reviewer, "Successful accepted");
+                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)));
+                                }).catch((e: any) =>
                                     bot.sendMessage(match.reviewer, e.stack));
 
                             }).catch((e: any) => console.error(e.stack));
@@ -80,8 +85,10 @@ module.exports = {
                         text: 'DECLINE',
                         callback_data: 'D',
                         callback: () => {
-                            db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() =>
-                                bot.sendMessage(match.reviewer, "Successful declined")).catch((e: any) =>
+                            db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
+                                bot.sendMessage(match.reviewer, "Successful declined");
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)));
+                            }).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
                         }
                     }
@@ -91,8 +98,10 @@ module.exports = {
                         text: 'REQUEST CHANGES',
                         callback_data: 'R',
                         callback: () => {
-                            db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() =>
-                                bot.sendMessage(match.reviewer, "Successful requested")).catch((e: any) =>
+                            db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
+                                bot.sendMessage(match.reviewer, "Successful requested");
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)));
+                            }).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
                         }
                     },

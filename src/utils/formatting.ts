@@ -18,3 +18,6 @@ export const capitalize: ([...st]: readonly any[]) => any = ([...st]) =>
 
 export const precedeChar: (s: string) => string = (s: string) =>
     s.replace(/([_\]\[)(~>#+\-=|}{.!])/gm, `\\$1`);
+
+export const grabUsrID: (s: string) => string = (s: string) =>
+    s.slice(s.lastIndexOf('<') + 1, s.lastIndexOf('>'));
