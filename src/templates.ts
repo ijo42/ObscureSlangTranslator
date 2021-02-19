@@ -1,5 +1,18 @@
 import { CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
 import { bot } from "./app";
+import { queries } from "./db/patterns";
+import { QueryResult } from "pg";
+import { fuse } from "./utils/fuzzySearch";
+
+const db = require("./db");
+
+export const StagingStatus = {
+    WAITING: 'waiting',
+    ACCEPTED: 'accepted',
+    DECLINED: 'declined',
+    REQUEST_CHANGES: 'request_changes',
+    SYNONYM: 'synonym'
+}
 
 export interface Command {
     regexp: RegExp;
@@ -42,7 +55,7 @@ module.exports = {
         }
 
     },
-    moderateMarkup: function (_vars: string[]): Keyboard {
+    moderateMarkup: function (match: ModerateAction): Keyboard {
         return {
             inline_keyboard: [
                 [
@@ -50,12 +63,26 @@ module.exports = {
                         text: 'ACCEPT',
                         callback_data: 'A',
                         callback: () => {
+                            db.query(queries.insertTerm, [match.term, match.value, match.author]).then((res: QueryResult) => {
+                                fuse.add(match);
+
+                                if (!res.rows[0])
+                                    console.error(`res.rows[0] is null: ${JSON.stringify(res)}`);
+
+                                db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() =>
+                                    bot.sendMessage(match.reviewer, "Successful accepted")).catch((e: any) =>
+                                    bot.sendMessage(match.reviewer, e.stack));
+
+                            }).catch((e: any) => console.error(e.stack));
                         }
                     },
                     {
                         text: 'DECLINE',
                         callback_data: 'D',
                         callback: () => {
+                            db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() =>
+                                bot.sendMessage(match.reviewer, "Successful declined")).catch((e: any) =>
+                                bot.sendMessage(match.reviewer, e.stack));
                         }
                     }
                 ],
@@ -64,12 +91,16 @@ module.exports = {
                         text: 'REQUEST CHANGES',
                         callback_data: 'R',
                         callback: () => {
+                            db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() =>
+                                bot.sendMessage(match.reviewer, "Successful requested")).catch((e: any) =>
+                                bot.sendMessage(match.reviewer, e.stack));
                         }
                     },
                     {
                         text: 'SYNONYM',
                         callback_data: 'S',
                         callback: () => {
+                            bot.sendMessage(match.reviewer, "Not yet implemented");
                         }
                     }
                 ]
