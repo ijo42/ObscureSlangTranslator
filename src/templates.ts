@@ -3,9 +3,10 @@ import { bot } from "./app";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { fuse, fuzzySearchWithLen } from "./utils/fuzzySearch";
-import { formatAnswer, grabUsrID } from "./utils/formatting";
+import { formatAnswer, formatAnswerUnpreceded, grabUsrID } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
+import { registerCallback } from "./inLineHandler";
 
 const db = require("./db");
 
@@ -75,7 +76,9 @@ module.exports = {
 
                                 db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
                                     bot.sendMessage(match.reviewer, "Successful accepted");
-                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)));
+                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                                        parse_mode: "MarkdownV2"
+                                    });
                                 }).catch((e: any) =>
                                     bot.sendMessage(match.reviewer, e.stack));
 
@@ -88,7 +91,9 @@ module.exports = {
                         callback: () => {
                             db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
                                 bot.sendMessage(match.reviewer, "Successful declined");
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)));
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
+                                    parse_mode: "MarkdownV2"
+                                });
                             }).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
                         }
@@ -101,7 +106,9 @@ module.exports = {
                         callback: () => {
                             db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
                                 bot.sendMessage(match.reviewer, "Successful requested");
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)));
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
+                                    parse_mode: "MarkdownV2"
+                                });
                             }).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
                         }
