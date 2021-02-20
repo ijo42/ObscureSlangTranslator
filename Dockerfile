@@ -13,7 +13,8 @@ RUN npm ci --quiet && npm run build
 FROM node:14-alpine
 WORKDIR /usr/src/app
 
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    NTBA_FIX_319=true
 
 COPY LICENSE ./
 COPY package*.json ./
