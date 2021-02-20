@@ -1,5 +1,6 @@
 import { CallbackQuery, Message } from "node-telegram-bot-api";
 import { Keyboard } from "./templates";
+import { hasRights } from "./utils/moderate";
 
 const registeredCallbacks = new Map<number, Keyboard>();
 
@@ -8,7 +9,7 @@ export const registerCallback = (message: Message, callback: Keyboard) => {
 };
 
 export const processQuery = (query: CallbackQuery) => {
-    if (query.message && "reply_markup" in query.message) {
+    if (query.message && hasRights(query.from.id) && "reply_markup" in query.message) {
         registeredCallbacks.get(query.message.message_id)?.inline_keyboard.forEach(
             value =>
                 value.find(val =>
