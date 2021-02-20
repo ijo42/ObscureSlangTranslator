@@ -86,7 +86,7 @@ If mistake, click \`Force\``, {
         callback: (msg) => {
             const promoterId = msg.from?.id;
             if (promoterId && hasRights(promoterId)) {
-                if (msg.reply_to_message?.from) {
+                if (msg.reply_to_message?.from && !msg.reply_to_message.from.is_bot) {
                     const promotable = msg.reply_to_message.from;
                     const keyboard = keyboardWithConfirmation(() => {
                         promoteUser(promotable.id, promoterId).then(() => {
