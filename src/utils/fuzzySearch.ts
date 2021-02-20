@@ -27,8 +27,8 @@ const options = {
 
 export let fuse: Fuse<ObscureEntry>;
 
-export default function setup(): void {
-    db.query(queries.obscureCache).then((res: QueryResult): void => {
+export default async function setup() {
+    await db.query(queries.obscureCache).then((res: QueryResult): void => {
         fuse = new Fuse(res.rows, options);
     }).catch((e: any) => console.error(e.stack));
 }
