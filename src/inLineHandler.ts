@@ -1,6 +1,15 @@
-import { CallbackQuery, Message } from "node-telegram-bot-api";
+import TelegramBot, {
+    CallbackQuery,
+    InlineQueryResultArticle,
+    InputTextMessageContent,
+    Message
+} from "node-telegram-bot-api";
 import { Keyboard } from "./templates";
 import { hasRights } from "./utils/moderate";
+import { fuzzySearchWithLen } from "./utils/fuzzySearch";
+import { randomInt } from "crypto";
+import { formatAnswer } from "./utils/formatting";
+import { bot } from "./app";
 
 const registeredCallbacks = new Map<number, Keyboard>();
 
@@ -17,3 +26,13 @@ export const processQuery = (query: CallbackQuery) => {
         registeredCallbacks.delete(query.message.message_id);
     }
 }
+
+export const processInline = (query: TelegramBot.InlineQuery) => bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 50).map(value => <InlineQueryResultArticle>{
+    type: 'article',
+    id: randomInt(10000).toString(),
+    title: value.term,
+    input_message_content: <InputTextMessageContent>{
+        message_text: formatAnswer(value),
+        parse_mode: "MarkdownV2"
+    }
+}));

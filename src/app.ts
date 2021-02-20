@@ -3,7 +3,7 @@ import { texts } from "./texts";
 import { commands } from "./commands";
 import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
-import { processQuery } from "./inLineHandler";
+import { processInline, processQuery } from "./inLineHandler";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
@@ -13,9 +13,9 @@ global.debug = process.env.debug || false;
 export const bot = new TelegramBot(token, {polling: true});
 
 setupFuzzyCache().then(() => setupModerateCache()).then(() => {
-        bot.on('new_chat_members', msg => {
-            bot.sendMessage(msg.chat.id, texts.welcome);
-        });
+    bot.on('new_chat_members', msg => {
+        bot.sendMessage(msg.chat.id, texts.welcome);
+    });
 
     bot.on('polling_error', error => {
         console.log(JSON.stringify(error));  // => 'EFATAL'
@@ -24,6 +24,8 @@ setupFuzzyCache().then(() => setupModerateCache()).then(() => {
     bot.on('callback_query', query => {
         if (query.message) processQuery(query);
     });
+
+    bot.on('inline_query', query => processInline(query));
 
     commands.forEach(command => {
         bot.onText(command.regexp, command.callback);
