@@ -1,4 +1,4 @@
-import { CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
+import { BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
 import { bot } from "./app";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
@@ -18,9 +18,10 @@ export const StagingStatus = {
     SYNONYM: 'synonym'
 }
 
-export interface Command {
+export interface Command extends BotCommand {
     regexp: RegExp;
-    desk: string;
+    command: string;
+    description: string;
     callback: ((msg: Message, match: RegExpExecArray | null) => void)
 }
 

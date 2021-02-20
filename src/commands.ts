@@ -9,10 +9,11 @@ import { registerCallback } from "./inLineHandler";
 
 const db = require("./db");
 
-export let commands = new Map<string, Command>([
-    ["size", {
+export const commands: Command[] = [
+    {
+        command: '/size',
         regexp: /\/size/,
-        desk: 'Get last DB index',
+        description: 'Get last DB index',
         callback: (msg => {
             const chatId = msg.chat.id;
             db.query(queries.lastIndex).then((res: QueryResult) => {
@@ -23,12 +24,12 @@ export let commands = new Map<string, Command>([
                     console.error("res.rows[0] is null: ", JSON.stringify(res));
             })
         })
-    }
-    ],
+    },
 
-    ["add", {
+    {
+        command: '/name',
         regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,.\-)( ]{2,})$/,
-        desk: 'Main upload command',
+        description: 'Main upload command',
         callback: (msg, match) => {
             if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
                 return;
@@ -56,22 +57,24 @@ If mistake, click \`Force\``, {
             } else
                 upload();
         }
-    }
-    ],
+    },
 
-    ["start", {
+    {
+        command: '/start',
         regexp: /\/start/,
-        desk: 'Welcome-Command',
+        description: 'Welcome-Command',
         callback: (msg) => {
             bot.sendMessage(msg.chat.id, texts.welcome);
         }
-    }],
-    ["get", {
-        regexp: /\/get ([a-zA-Z0-9_а-яА-Я ]+)/, desk: 'Get Fuzzy Terms',
+    },
+    {
+        command: '/get',
+        regexp: /\/get ([a-zA-Z0-9_а-яА-Я ]+)/,
+        description: 'Get Fuzzy Terms',
         callback: (msg, match) => {
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
                 parse_mode: "MarkdownV2"
             });
         }
-    }]
-]);
+    }
+];

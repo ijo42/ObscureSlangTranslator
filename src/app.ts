@@ -1,9 +1,8 @@
-import TelegramBot, { BotCommand } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import { texts } from "./texts";
 import { commands } from "./commands";
 import setupCache from "./utils/fuzzySearch";
 import { processQuery } from "./inLineHandler";
-import { Command } from "./templates";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
@@ -18,13 +17,7 @@ console.log('Bot setup successful');
 commands.forEach(command => {
     bot.onText(command.regexp, command.callback);
 })
-const botCommands: BotCommand[] = [];
-commands.forEach((value: Command, key: string) =>
-    botCommands.push({
-        command: key,
-        description: value.desk
-    }));
-bot.setMyCommands(botCommands);
+bot.setMyCommands(commands);
 
 bot.on('new_chat_members', (msg) => {
     bot.sendMessage(msg.chat.id, texts.welcome);
