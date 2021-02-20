@@ -54,14 +54,14 @@ export function processReplenishment(entry: ObscureEntry, author: string): Promi
     }).catch((e: any) => console.error(e.stack));
 }
 
-export function forceUpload(onForce: () => void): Keyboard {
+export function keyboardWithConfirmation(onForce: () => void, text: string): Keyboard {
     return {
         inline_keyboard: [
             [{
-                text: 'Force', callback_data: 'F',
+                text: text, callback_data: 'F',
                 callback: (query) => {
                     onForce();
-                    bot.answerCallbackQuery(query.id);
+                    bot.answerCallbackQuery(query.id)
                 }
             }]
         ]

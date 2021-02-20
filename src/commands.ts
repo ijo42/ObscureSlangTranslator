@@ -1,4 +1,4 @@
-import { Command, forceUpload, ObscureEntry, processReplenishment } from "./templates";
+import { Command, keyboardWithConfirmation, ObscureEntry, processReplenishment } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
@@ -47,7 +47,7 @@ export const commands: Command[] = [
             }
 
             if (fuzzy) {
-                const keyboard = forceUpload(upload);
+                const keyboard = keyboardWithConfirmation(upload, 'Force');
                 bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
 If mistake, click \`Force\``, {
