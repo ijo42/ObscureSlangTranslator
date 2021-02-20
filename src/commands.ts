@@ -88,14 +88,16 @@ If mistake, click \`Force\``, {
             if (promoterId && hasRights(promoterId)) {
                 if (msg.reply_to_message?.from) {
                     const promotable = msg.reply_to_message.from;
-                    bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, formatUsername(promotable)), {
-                        reply_markup: keyboardWithConfirmation(() => {
-                            promoteUser(promotable.id, promoterId).then(() => {
-                                bot.sendMessage(promoterId, texts.successfulPromoting);
-                                bot.sendMessage(promotable.id, texts.promoteAnnounce);
-                            }).catch(e => bot.sendMessage(promoterId, e.stack));
-                        }, 'Promote')
-                    })
+                    const keyboard = keyboardWithConfirmation(() => {
+                        promoteUser(promotable.id, promoterId).then(() => {
+                            bot.sendMessage(promoterId, texts.successfulPromoting);
+                            bot.sendMessage(promotable.id, texts.promoteAnnounce);
+                        }).catch(e => bot.sendMessage(promoterId, e.stack));
+                    }, 'Promote');
+
+                    bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, `${promotable.username ? "@" : ""}${formatUsername(promotable)}`), {
+                        reply_markup: keyboard
+                    }).then(value => registerCallback(value, keyboard))
                 } else
                     bot.sendMessage(msg.chat.id, texts.provideAUser, {
                         parse_mode: "MarkdownV2"

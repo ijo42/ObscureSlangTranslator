@@ -13,11 +13,9 @@ global.debug = process.env.debug || false;
 export const bot = new TelegramBot(token, {polling: true});
 
 setupFuzzyCache().then(() => setupModerateCache()).then(() => {
-    console.log('Bot setup successful');
-
-    bot.on('new_chat_members', msg => {
-        bot.sendMessage(msg.chat.id, texts.welcome);
-    });
+        bot.on('new_chat_members', msg => {
+            bot.sendMessage(msg.chat.id, texts.welcome);
+        });
 
     bot.on('polling_error', error => {
         console.log(JSON.stringify(error));  // => 'EFATAL'
@@ -33,4 +31,8 @@ setupFuzzyCache().then(() => setupModerateCache()).then(() => {
     bot.setMyCommands(commands);
 
     console.log(`Registered ${commands.length} commands`)
-});
+    bot.getMe().then(value => {
+        if (value.username)
+            console.log(`Bot: https://t.me/${value.username}`)
+    })
+}).then(() => console.log('Bot setup successful'));

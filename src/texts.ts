@@ -6,6 +6,7 @@ export const texts = {
     confirmPromotion: 'Are you confident in user promotion %s',
     promoteAnnounce: 'You are promoted to moderator',
     successfulPromoting: 'Successful promoted',
+    firstStart: 'That\'s a first start, to get moderator rights send command: `%s`',
     moderateAnnounce: {
         accepted: 'Your term, `%s`, successful accepted',
         declined: 'Your term, `%s`, declined',

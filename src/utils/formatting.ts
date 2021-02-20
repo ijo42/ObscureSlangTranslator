@@ -2,6 +2,7 @@ import { User } from "node-telegram-bot-api";
 import * as util from "util";
 import { ObscureEntry } from "../templates";
 import { texts } from "../texts";
+import { randomBytes } from "crypto";
 
 export const formatUsername = (user: User) => {
     return util.format(`%s <${user.id}>`, user.username ||
@@ -28,3 +29,9 @@ export const grabUsrID: (s: string) => string = (s: string) =>
 
 export const formatDBSize = (s: string | number) =>
     util.format(texts.dbSize, s.toString());
+
+export function randomString(size = 8) {
+    return randomBytes(size)
+        .toString('base64')
+        .slice(0, size)
+}

@@ -6,5 +6,5 @@ export const queries = {
     updateStaging: 'UPDATE staging SET (status, updated, reviewed_by, accepted_as) = ($1, CURRENT_TIMESTAMP, $2, $3) WHERE id = $4',
     insertSynonym: 'UPDATE obscure SET synonyms = array_prepend($1, synonyms) WHERE id = $2',
     moderatorCache: 'SELECT user_id FROM moderators ORDER BY id',
-    insertModerator: 'INSERT INTO moderators(user_id, promoted_by) VALUES ($2,$3) RETURNING id'
+    insertModerator: 'INSERT INTO moderators(user_id, promoted_by) VALUES ($1,$2) RETURNING id'
 }
