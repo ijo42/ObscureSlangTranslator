@@ -91,7 +91,11 @@ If mistake, click \`Force\``, {
                     const keyboard = keyboardWithConfirmation(() => {
                         promoteUser(promotable.id, promoterId).then(() => {
                             bot.sendMessage(msg.chat.id, texts.successfulPromoting);
-                            bot.sendMessage(promotable.id, texts.promoteAnnounce);
+                            bot.sendMessage(promotable.id, texts.promoteAnnounce)
+                                .catch(() => bot.sendMessage(msg.chat.id,
+                                    `${promotable.username ? "@" : ""}${formatUsername(promotable)}, ` +
+                                    texts.promoteAnnounce));
+
                         }).catch(e => bot.sendMessage(promoterId, e.stack));
                     }, 'Promote');
 
