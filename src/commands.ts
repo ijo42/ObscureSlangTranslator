@@ -6,6 +6,8 @@ import { bot } from "./app";
 import { capitalize, formatAnswer, formatDBSize, formatUsername } from "./utils/formatting";
 import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
+import { hasRights, promoteUser } from "./utils/moderate";
+import { format } from "util";
 
 const db = require("./db");
 
@@ -75,6 +77,30 @@ If mistake, click \`Force\``, {
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
                 parse_mode: "MarkdownV2"
             });
+        }
+    },
+    {
+        command: '/promote',
+        regexp: /\/promote/g,
+        description: 'Promotes a user',
+        callback: (msg) => {
+            const promoterId = msg.from?.id;
+            if (promoterId && hasRights(promoterId)) {
+                if (msg.reply_to_message?.from) {
+                    const promotable = msg.reply_to_message.from;
+                    bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, formatUsername(promotable)), {
+                        reply_markup: keyboardWithConfirmation(() => {
+                            promoteUser(promotable.id, promoterId).then(() => {
+                                bot.sendMessage(promoterId, texts.successfulPromoting);
+                                bot.sendMessage(promotable.id, texts.promoteAnnounce);
+                            }).catch(e => bot.sendMessage(promoterId, e.stack));
+                        }, 'Promote')
+                    })
+                } else
+                    bot.sendMessage(msg.chat.id, texts.provideAUser, {
+                        parse_mode: "MarkdownV2"
+                    })
+            } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     }
 ];

@@ -14,7 +14,6 @@ export function hasRights(userId: number): boolean {
     return moderators.includes(userId);
 }
 
-export function promoteUser(user: number, promoter: number) {
-    db.query(queries.insertModerator, [user, promoter]);
-    moderators.push(user);
+export function promoteUser(promotable: number, promoter: number): Promise<number> {
+    return db.query(queries.insertModerator, [promotable, promoter]).then(() => moderators.push(promotable));
 }
