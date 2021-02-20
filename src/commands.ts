@@ -90,7 +90,7 @@ If mistake, click \`Force\``, {
                     const promotable = msg.reply_to_message.from;
                     const keyboard = keyboardWithConfirmation(() => {
                         promoteUser(promotable.id, promoterId).then(() => {
-                            bot.sendMessage(promoterId, texts.successfulPromoting);
+                            bot.sendMessage(msg.chat.id, texts.successfulPromoting);
                             bot.sendMessage(promotable.id, texts.promoteAnnounce);
                         }).catch(e => bot.sendMessage(promoterId, e.stack));
                     }, 'Promote');
