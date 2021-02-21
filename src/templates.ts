@@ -147,7 +147,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
                                 return;
                             }
-                            db.query(queries.insertSynonym, [match.term, matched.id]).then(() => {
+                            return db.query(queries.insertSynonym, [match.term, matched.id]).then(() =>
                                 db.query(queries.updateStaging, [StagingStatus.SYNONYM, match.reviewer, matched.id, match.stagingId]).then(() => {
                                     fuse.remove((doc: ObscureEntry) => matched == doc)
                                     matched.synonyms.push(match.term);
@@ -158,12 +158,11 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                         parse_mode: "MarkdownV2"
                                     });
                                 }).catch((e: any) =>
-                                    bot.sendMessage(match.reviewer, e.stack));
-                            }).catch((e: any) =>
+                                    bot.sendMessage(match.reviewer, e.stack))).catch((e: any) =>
                                 bot.sendMessage(match.reviewer, e.stack));
                         }, match.reviewer);
 
-                        bot.sendMessage(match.reviewer, "Select Synonym", {
+                        return bot.sendMessage(match.reviewer, "Select Synonym", {
                             reply_markup: replyMarkup
                         }).then(value => registerCallback(value, replyMarkup));
                     }
