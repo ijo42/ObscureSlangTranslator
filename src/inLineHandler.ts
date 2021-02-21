@@ -18,12 +18,16 @@ export const registerCallback = (message: Message, callback: Keyboard) => {
 };
 
 export const processQuery = (query: CallbackQuery) => {
-    if (query.message && hasRights(query.from.id) && "reply_markup" in query.message) {
-        registeredCallbacks.get(query.message.message_id)?.inline_keyboard.forEach(
-            value =>
-                value.find(val =>
-                    val.callback_data == query.data)?.callback(query));
-        registeredCallbacks.delete(query.message.message_id);
+    if (query.message && "reply_markup" in query.message) {
+        const possibleKeyboard = registeredCallbacks.get(query.message.message_id);
+        if (possibleKeyboard)
+            for (const columns of possibleKeyboard.inline_keyboard)
+                columns.find(val =>
+                    val.callback_data == query.data &&
+                    (!possibleKeyboard.restrictedTo || hasRights(query.from.id) ||
+                        possibleKeyboard.restrictedTo == query.from.id))
+                    ?.callback(query).then(() =>
+                    registeredCallbacks.delete(query.message?.message_id || -1));
     }
 }
 

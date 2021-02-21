@@ -88,7 +88,7 @@ If mistake, click \`Force\``, {
             if (promoterId && hasRights(promoterId)) {
                 if (msg.reply_to_message?.from && !msg.reply_to_message.from.is_bot) {
                     const promotable = msg.reply_to_message.from;
-                    const keyboard = keyboardWithConfirmation(() => {
+                    const keyboard = keyboardWithConfirmation(() =>
                         promoteUser(promotable.id, promoterId).then(() => {
                             bot.sendMessage(msg.chat.id, texts.successfulPromoting);
                             bot.sendMessage(promotable.id, texts.promoteAnnounce)
@@ -96,8 +96,7 @@ If mistake, click \`Force\``, {
                                     `${promotable.username ? "@" : ""}${formatUsername(promotable)}, ` +
                                     texts.promoteAnnounce));
 
-                        }).catch(e => bot.sendMessage(promoterId, e.stack));
-                    }, 'Promote');
+                        }).catch(e => bot.sendMessage(promoterId, e.stack)), 'Promote', promoterId);
 
                     bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, `${promotable.username ? "@" : ""}${formatUsername(promotable)}`), {
                         reply_markup: keyboard
