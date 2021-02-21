@@ -1,4 +1,4 @@
-import { Command, keyboardWithConfirmation, moderateMarkup, ObscureEntry, processReplenishment } from "./templates";
+import { Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
@@ -29,35 +29,34 @@ export const commands: Command[] = [
     },
 
     {
-        command: '/name',
+        command: '/add',
         regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,.\-)( ]{2,})$/,
-        description: 'Main upload command',
+        description: 'Command to suggest a new term',
         callback: (msg, match) => {
             if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = capitalize([match[2], match[3]]);
             const fuzzy = fuzzySearch(vars);
-            const entry: ObscureEntry = {
+            const entry = {
                 id: -1, synonyms: [],
                 term: <string>vars[0],
                 value: <string>vars[1]
             };
-            const upload = () => {
+            const upload = () =>
                 processReplenishment(entry, msg.from ? formatUsername(msg.from) : '').then(value =>
-                    bot.sendMessage(msg.chat.id, formatDBSize(value.rows[0].id)));
-            }
+                    bot.sendMessage(msg.chat.id, formatDBSize(value.rows[0].id)))
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, 'Force');
-                bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
+                return bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
 If mistake, click \`Force\``, {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2"
                 }).then(answer => registerCallback(answer, keyboard));
             } else
-                upload();
+                return upload();
         }
     },
 
@@ -65,19 +64,16 @@ If mistake, click \`Force\``, {
         command: '/start',
         regexp: /\/start/,
         description: 'Welcome-Command',
-        callback: (msg) => {
-            bot.sendMessage(msg.chat.id, texts.welcome);
-        }
+        callback: (msg) => bot.sendMessage(msg.chat.id, texts.welcome)
     },
     {
         command: '/get',
         regexp: /\/get ([a-zA-Z0-9_а-яА-Я ]+)/,
         description: 'Get Fuzzy Terms',
-        callback: (msg, match) => {
+        callback: (msg, match) =>
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
                 parse_mode: "MarkdownV2"
-            });
-        }
+            })
     },
     {
         command: '/promote',

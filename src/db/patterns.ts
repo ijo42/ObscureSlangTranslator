@@ -1,5 +1,6 @@
 export const queries = {
     insertTerm: 'INSERT INTO obscure(term, value, author) VALUES($1, $2, $3) RETURNING id',
+    insertStg: 'INSERT INTO staging(term, value, author) VALUES($1, $2, $3) RETURNING id',
     lastIndex: 'SELECT max(id) FROM obscure',
     obscureCache: 'SELECT id, term, value, synonyms FROM obscure ORDER BY id',
     stagingEntry: 'SELECT id, term, value, author FROM staging WHERE status=\'waiting\' ORDER BY id LIMIT 1',
