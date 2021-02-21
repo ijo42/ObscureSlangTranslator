@@ -109,7 +109,7 @@ If mistake, click \`Force\``, {
         regexp: /\/moderate/, description: 'Moderate an staging entry',
         callback: msg => {
             return db.query(queries.stagingEntry).then((res: QueryResult) => {
-                if (msg.from == undefined || !hasRights(msg.from?.id)) {
+                if (!msg.from || !hasRights(msg.from?.id)) {
                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                 } else if (!res.rows[0]) {
                     bot.sendMessage(msg.chat.id, `No another staging`);
@@ -120,7 +120,8 @@ If mistake, click \`Force\``, {
                         value: res.rows[0].value,
                         term: res.rows[0].term,
                         author: res.rows[0].author,
-                        reviewer: msg.chat.id
+                        reviewer: msg.from.id,
+                        reviewingChat: msg.chat.id
                     };
                     const keyboard = moderateMarkup(match, msg.from.id);
 

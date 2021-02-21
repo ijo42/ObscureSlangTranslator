@@ -36,6 +36,7 @@ export interface ModerateAction extends ObscureEntry {
     stagingId: number;
     author: string;
     reviewer: number;
+    reviewingChat: number;
 }
 
 interface KeyboardButton extends InlineKeyboardButton {
@@ -97,8 +98,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     callback: () => {
                         return processReplenishment(match, match.author, false).then((res: QueryResult) => {
                             return db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
-                                bot.sendMessage(match.reviewer, "Successful accepted");
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                                bot.sendMessage(match.reviewingChat, "Successful accepted");
+                                return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                     parse_mode: "MarkdownV2"
                                 });
                             }).catch((e: any) =>
@@ -111,8 +112,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     callback_data: 'D',
                     callback: () => {
                         return db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
-                            bot.sendMessage(match.reviewer, "Successful declined");
-                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
+                            bot.sendMessage(match.reviewingChat, "Successful declined");
+                            return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
@@ -126,8 +127,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     callback_data: 'R',
                     callback: () => {
                         return db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
-                            bot.sendMessage(match.reviewer, "Successful requested");
-                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
+                            bot.sendMessage(match.reviewingChat, "Successful requested");
+                            return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
@@ -153,16 +154,15 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     matched.synonyms.push(match.term);
                                     fuse.add(matched);
 
-                                    bot.sendMessage(match.reviewer, "Successful marked as Synonym");
-                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
+                                    bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
+                                    return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
                                         parse_mode: "MarkdownV2"
                                     });
                                 }).catch((e: any) =>
-                                    bot.sendMessage(match.reviewer, e.stack))).catch((e: any) =>
-                                bot.sendMessage(match.reviewer, e.stack));
+                                    bot.sendMessage(match.reviewer, e.stack)));
                         }, match.reviewer);
 
-                        return bot.sendMessage(match.reviewer, "Select Synonym", {
+                        return bot.sendMessage(match.reviewingChat, "Select Synonym", {
                             reply_markup: replyMarkup
                         }).then(value => registerCallback(value, replyMarkup));
                     }
