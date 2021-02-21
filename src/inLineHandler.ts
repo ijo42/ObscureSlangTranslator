@@ -24,8 +24,8 @@ export const processQuery = (query: CallbackQuery) => {
             for (const columns of possibleKeyboard.inline_keyboard)
                 columns.find(val =>
                     val.callback_data == query.data &&
-                    (!possibleKeyboard.restrictedTo || hasRights(query.from.id) ||
-                        possibleKeyboard.restrictedTo == query.from.id))?.callback(query)
+                    (!possibleKeyboard.restrictedTo || possibleKeyboard.restrictedTo === query.from.id ||
+                        (possibleKeyboard.restrictedTo === true && hasRights(query.from.id))))?.callback(query)
                     .then(() =>
                         registeredCallbacks.delete(query.message?.message_id || -1))
                     .then(() => bot.answerCallbackQuery(query.id))
