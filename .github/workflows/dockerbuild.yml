@@ -66,15 +66,3 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-
-      - name: Create release
-        id: create_release
-        if: ${{ github.event_name == 'create' && github.event.ref_type == 'tag' }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Obscure Slang Translator ${{ github.ref }}
-          draft: false
-          prerelease: false
