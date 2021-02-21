@@ -1,4 +1,4 @@
-import { Command, keyboardWithConfirmation, ObscureEntry, processReplenishment } from "./templates";
+import { Command, keyboardWithConfirmation, moderateMarkup, ObscureEntry, processReplenishment } from "./templates";
 import { queries } from "./db/patterns";
 import { QueryResult } from "pg";
 import { texts } from "./texts";
@@ -106,6 +106,34 @@ If mistake, click \`Force\``, {
                         parse_mode: "MarkdownV2"
                     })
             } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
+        }
+    },
+    {
+        command: '/moderate',
+        regexp: /\/moderate/, description: 'Moderate an staging entry',
+        callback: msg => {
+            db.query(queries.stagingEntry).then((res: QueryResult) => {
+                if (msg.from == undefined || !hasRights(msg.from?.id)) {
+                    bot.sendMessage(msg.chat.id, texts.hasNoRights);
+                } else if (!res.rows[0]) {
+                    bot.sendMessage(msg.chat.id, `No another staging`);
+                } else {
+                    const match = {
+                        id: -1, synonyms: [],
+                        stagingId: res.rows[0].id,
+                        value: res.rows[0].value,
+                        term: res.rows[0].term,
+                        author: res.rows[0].author,
+                        reviewer: msg.chat.id
+                    };
+                    const keyboard = moderateMarkup(match, msg.from.id);
+
+                    bot.sendMessage(msg.chat.id, `Accept: ${formatAnswer(match)}`, {
+                        parse_mode: "MarkdownV2",
+                        reply_markup: keyboard
+                    }).then(r => registerCallback(r, keyboard));
+                }
+            }).catch((e: any) => console.error(e.stack));
         }
     }
 ];

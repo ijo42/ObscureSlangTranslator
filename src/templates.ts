@@ -89,7 +89,7 @@ export function synonymMarkup(s: string[], run: ((s: number) => void), restricte
     return keyboard;
 }
 
-export function moderateMarkup(match: ModerateAction, restrictedTo = false): Keyboard {
+export function moderateMarkup(match: ModerateAction, restrictedTo: number | boolean = false): Keyboard {
     return {
         inline_keyboard: [
             [
