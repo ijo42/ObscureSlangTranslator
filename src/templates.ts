@@ -61,10 +61,7 @@ export function keyboardWithConfirmation(onForce: () => void, text: string, rest
         inline_keyboard: [
             [{
                 text: text, callback_data: 'F',
-                callback: (query) => {
-                    onForce();
-                    return bot.answerCallbackQuery(query.id)
-                }
+                callback: () => Promise.resolve(onForce())
             }]
         ],
         restrictedTo: restrictedTo

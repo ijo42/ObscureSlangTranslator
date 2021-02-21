@@ -25,9 +25,11 @@ export const processQuery = (query: CallbackQuery) => {
                 columns.find(val =>
                     val.callback_data == query.data &&
                     (!possibleKeyboard.restrictedTo || hasRights(query.from.id) ||
-                        possibleKeyboard.restrictedTo == query.from.id))
-                    ?.callback(query).then(() =>
-                    registeredCallbacks.delete(query.message?.message_id || -1));
+                        possibleKeyboard.restrictedTo == query.from.id))?.callback(query)
+                    .then(() =>
+                        registeredCallbacks.delete(query.message?.message_id || -1))
+                    .then(() => bot.answerCallbackQuery(query.id))
+                    .catch(e => bot.sendMessage(query.from.id, e.stack));
     }
 }
 
