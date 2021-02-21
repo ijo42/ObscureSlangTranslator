@@ -48,7 +48,7 @@ export const commands: Command[] = [
                     bot.sendMessage(msg.chat.id, formatDBSize(value.rows[0].id)))
 
             if (fuzzy) {
-                const keyboard = keyboardWithConfirmation(upload, 'Force');
+                const keyboard = keyboardWithConfirmation(upload, 'Force', msg.from.id);
                 return bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
 *${formatAnswer(fuzzy)}*
 If mistake, click \`Force\``, {
