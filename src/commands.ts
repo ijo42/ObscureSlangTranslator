@@ -18,12 +18,12 @@ export const commands: Command[] = [
         description: 'Get last DB index',
         callback: (msg => {
             const chatId = msg.chat.id;
-            db.query(queries.lastIndex).then((res: QueryResult) => {
+            return db.query(queries.lastIndex).then((res: QueryResult) => {
                 const reElement = res.rows[0];
                 if (reElement)
-                    bot.sendMessage(chatId, formatDBSize(reElement['max']));
+                    return bot.sendMessage(chatId, formatDBSize(reElement['max']));
                 else
-                    console.error("res.rows[0] is null: ", JSON.stringify(res));
+                    return Promise.reject(Error(`res.rows[0] is null: ${JSON.stringify(res)}`));
             })
         })
     },
@@ -94,21 +94,21 @@ If mistake, click \`Force\``, {
 
                         }).catch(e => bot.sendMessage(promoterId, e.stack)), 'Promote', promoterId);
 
-                    bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, `${promotable.username ? "@" : ""}${formatUsername(promotable)}`), {
+                    return bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, `${promotable.username ? "@" : ""}${formatUsername(promotable)}`), {
                         reply_markup: keyboard
                     }).then(value => registerCallback(value, keyboard))
                 } else
-                    bot.sendMessage(msg.chat.id, texts.provideAUser, {
+                    return bot.sendMessage(msg.chat.id, texts.provideAUser, {
                         parse_mode: "MarkdownV2"
                     })
-            } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
+            } else return bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     },
     {
         command: '/moderate',
         regexp: /\/moderate/, description: 'Moderate an staging entry',
         callback: msg => {
-            db.query(queries.stagingEntry).then((res: QueryResult) => {
+            return db.query(queries.stagingEntry).then((res: QueryResult) => {
                 if (msg.from == undefined || !hasRights(msg.from?.id)) {
                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                 } else if (!res.rows[0]) {
