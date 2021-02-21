@@ -30,7 +30,7 @@ export const commands: Command[] = [
 
     {
         command: '/add',
-        regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,.\-)( ]{2,})$/,
+        regexp: /^(\/add )?([a-zA-Z0-9_а-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([a-zA-Z0-9_а-яА-Я,.\-)( ]{2,})/,
         description: 'Command to suggest a new term',
         callback: (msg, match) => {
             if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
@@ -77,7 +77,7 @@ If mistake, click \`Force\``, {
     },
     {
         command: '/promote',
-        regexp: /\/promote/g,
+        regexp: /\/promote/,
         description: 'Promotes a user',
         callback: (msg) => {
             const promoterId = msg.from?.id;
