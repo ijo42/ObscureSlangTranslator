@@ -1,22 +1,11 @@
 import { BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
 import { bot } from "./app";
-import { queries } from "./db/patterns";
-import { QueryResult } from "pg";
 import { fuse, fuzzySearchWithLen } from "./utils/fuzzySearch";
 import { formatAnswer, formatAnswerUnpreceded, grabUsrID } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
 import { registerCallback } from "./inLineHandler";
-
-const db = require("./db");
-
-export const StagingStatus = {
-    WAITING: 'waiting',
-    ACCEPTED: 'accepted',
-    DECLINED: 'declined',
-    REQUEST_CHANGES: 'request_changes',
-    SYNONYM: 'synonym'
-}
+import prisma from "./db";
 
 export interface Command extends BotCommand {
     regexp: RegExp;
@@ -48,13 +37,35 @@ export interface Keyboard extends InlineKeyboardMarkup {
     restrictedTo: number | boolean;
 }
 
-export function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<QueryResult> {
-    return db.query(staging ? queries.insertStg : queries.insertTerm, [entry.term, entry.value, author]).then((res: QueryResult) => {
-        entry.id = res.rows[0].id
-        if (!staging)
+export async function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<number> {
+    if (staging)
+        await prisma.staging.create({
+            data: {
+                term: entry.term,
+                value: entry.value,
+                author: author
+            },
+            select: {
+                id: true
+            }
+        }).then(val => {
+            entry.id = val.id;
+        });
+    else
+        await prisma.obscure.create({
+            data: {
+                term: entry.term,
+                value: entry.value,
+                author: author
+            },
+            select: {
+                id: true
+            }
+        }).then(val => {
+            entry.id = val.id;
             fuse.add(entry);
-        return Promise.resolve(res);
-    }).catch((e: any) => console.error(e.stack));
+        });
+    return entry.id;
 }
 
 export function keyboardWithConfirmation(onForce: () => void, text: string, restrictedTo: number | boolean = false): Keyboard {
@@ -96,14 +107,23 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'ACCEPT',
                     callback_data: 'A',
                     callback: () => {
-                        return processReplenishment(match, match.author, false).then((res: QueryResult) => {
-                            return db.query(queries.updateStaging, [StagingStatus.ACCEPTED, match.reviewer, res.rows[0].id, match.stagingId]).then(() => {
+                        return processReplenishment(match, match.author, false).then((acceptedAs) => {
+                            return prisma.staging.update({
+                                where: {
+                                    id: match.stagingId
+                                },
+                                data: {
+                                    status: 'accepted',
+                                    reviewed_by: match.reviewer,
+                                    accepted_as: acceptedAs
+                                }
+                            }).then(() => {
                                 bot.sendMessage(match.reviewingChat, "Successful accepted");
                                 return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                     parse_mode: "MarkdownV2"
                                 });
                             }).catch((e: any) =>
-                                bot.sendMessage(match.reviewer, e.stack));
+                                bot.sendMessage(match.reviewer, e.stack))
                         })
                     }
                 },
@@ -111,7 +131,15 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'DECLINE',
                     callback_data: 'D',
                     callback: () => {
-                        return db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, null, match.stagingId]).then(() => {
+                        return prisma.staging.update({
+                            where: {
+                                id: match.stagingId
+                            },
+                            data: {
+                                status: 'declined',
+                                reviewed_by: match.reviewer,
+                            }
+                        }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful declined");
                             return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
@@ -126,7 +154,15 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'REQUEST CHANGES',
                     callback_data: 'R',
                     callback: () => {
-                        return db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, null, match.stagingId]).then(() => {
+                        return prisma.staging.update({
+                            where: {
+                                id: match.stagingId
+                            },
+                            data: {
+                                status: 'request_changes',
+                                reviewed_by: match.reviewer,
+                            }
+                        }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful requested");
                             return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
@@ -148,18 +184,29 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
                                 return;
                             }
-                            return db.query(queries.insertSynonym, [match.term, matched.id]).then(() =>
-                                db.query(queries.updateStaging, [StagingStatus.SYNONYM, match.reviewer, matched.id, match.stagingId]).then(() => {
-                                    fuse.remove((doc: ObscureEntry) => matched == doc)
-                                    matched.synonyms.push(match.term);
-                                    fuse.add(matched);
 
-                                    bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
-                                    return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
-                                        parse_mode: "MarkdownV2"
-                                    });
-                                }).catch((e: any) =>
-                                    bot.sendMessage(match.reviewer, e.stack)));
+                            // to resolve https://github.com/prisma/prisma/issues/5078
+                            return prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${matched.id}`
+                                .then(() => {
+                                    prisma.staging.update({
+                                        where: {
+                                            id: match.stagingId
+                                        },
+                                        data: {
+                                            status: "synonym",
+                                            reviewed_by: match.reviewer,
+                                            accepted_as: matched.id
+                                        }
+                                    }).then(() => {
+                                        fuse.remove((doc: ObscureEntry) => matched == doc)
+                                        matched.synonyms.push(match.term);
+                                        fuse.add(matched);
+                                        bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
+                                        return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
+                                            parse_mode: "MarkdownV2"
+                                        });
+                                    }).catch(e => console.error(e));
+                                }).catch(e => console.error(e))
                         }, match.reviewer);
 
                         return bot.sendMessage(match.reviewingChat, "Select Synonym", {

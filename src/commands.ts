@@ -1,6 +1,4 @@
 import { Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
-import { queries } from "./db/patterns";
-import { QueryResult } from "pg";
 import { texts } from "./texts";
 import { bot } from "./app";
 import { capitalize, formatAnswer, formatDBSize, formatUsername } from "./utils/formatting";
@@ -8,8 +6,7 @@ import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
-
-const db = require("./db");
+import prisma from "./db";
 
 export const commands: Command[] = [
     {
@@ -18,13 +15,7 @@ export const commands: Command[] = [
         description: 'Get last DB index',
         callback: (msg => {
             const chatId = msg.chat.id;
-            return db.query(queries.lastIndex).then((res: QueryResult) => {
-                const reElement = res.rows[0];
-                if (reElement)
-                    return bot.sendMessage(chatId, formatDBSize(reElement['max']));
-                else
-                    return Promise.reject(Error(`res.rows[0] is null: ${JSON.stringify(res)}`));
-            })
+            return prisma.obscure.count().then(num => bot.sendMessage(chatId, formatDBSize(num)));
         })
     },
 
@@ -44,8 +35,8 @@ export const commands: Command[] = [
                 value: <string>vars[1]
             };
             const upload = () =>
-                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '').then(value =>
-                    bot.sendMessage(msg.chat.id, formatDBSize(value.rows[0].id)))
+                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '').then(acceptedAs =>
+                    bot.sendMessage(msg.chat.id, formatDBSize(acceptedAs)))
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, 'Force', msg.from.id);
@@ -108,18 +99,34 @@ If mistake, click \`Force\``, {
         command: '/moderate',
         regexp: /\/moderate/, description: 'Moderate an staging entry',
         callback: msg => {
-            return db.query(queries.stagingEntry).then((res: QueryResult) => {
-                if (!msg.from || !hasRights(msg.from?.id)) {
-                    bot.sendMessage(msg.chat.id, texts.hasNoRights);
-                } else if (!res.rows[0]) {
-                    bot.sendMessage(msg.chat.id, `No another staging`);
-                } else {
+            if (!msg.from || !hasRights(msg.from?.id))
+                return bot.sendMessage(msg.chat.id, texts.hasNoRights);
+            else
+                return prisma.staging.findFirst({
+                    take: 1,
+                    where: {
+                        status: 'waiting'
+                    },
+                    select: {
+                        "id": true,
+                        "value": true,
+                        "term": true,
+                        "author": true
+                    }
+                }).then(res => {
+                    if (!res) {
+                        bot.sendMessage(msg.chat.id, `No another staging`);
+                        return;
+                    }
+                    if (!msg.from)
+                        throw new Error("msg.from is undefined");
+
                     const match = {
                         id: -1, synonyms: [],
-                        stagingId: res.rows[0].id,
-                        value: res.rows[0].value,
-                        term: res.rows[0].term,
-                        author: res.rows[0].author,
+                        stagingId: res.id,
+                        value: res.value,
+                        term: res.term,
+                        author: res.author,
                         reviewer: msg.from.id,
                         reviewingChat: msg.chat.id
                     };
@@ -129,8 +136,7 @@ If mistake, click \`Force\``, {
                         parse_mode: "MarkdownV2",
                         reply_markup: keyboard
                     }).then(r => registerCallback(r, keyboard));
-                }
-            }).catch((e: any) => console.error(e.stack));
+                }).catch((e: any) => console.error(e.stack));
         }
     }
 ];

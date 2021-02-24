@@ -1,10 +1,7 @@
 import Fuse from "fuse.js";
-import { queries } from "../db/patterns";
-import { QueryResult } from "pg";
 import { ObscureEntry } from "../templates";
 import { formatAnswer } from "./formatting";
-
-const db = require("../db")
+import prisma from "../db";
 
 const options = {
     includeScore: true,
@@ -28,9 +25,16 @@ const options = {
 export let fuse: Fuse<ObscureEntry>;
 
 export default async function setup() {
-    await db.query(queries.obscureCache).then((res: QueryResult): void => {
-        fuse = new Fuse(res.rows, options);
-    }).catch((e: any) => console.error(e.stack));
+    await prisma.obscure.findMany({
+        select: {
+            id: true,
+            value: true,
+            term: true,
+            synonyms: true
+        }
+    }).then(val =>
+        fuse = new Fuse(val, options))
+        .catch((e: any) => console.error(e.stack));
 }
 
 export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => {

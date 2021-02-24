@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model moderators {
+  id          Int       @id @default(autoincrement())
+  user_id     Int       @unique
+  promoted_by Int
+  staging     staging[]
+}
+
+model obscure {
+  id        Int       @id @default(autoincrement())
+  term      String
+  value     String
+  author    String
+  submitted DateTime? @default(now()) @db.Timestamp(6)
+  synonyms  String[]
+  staging   staging[]
+}
+
+model staging {
+  id          Int             @id @default(autoincrement())
+  status      staging_status? @default(waiting)
+  created     DateTime        @default(now()) @db.Timestamp(6)
+  updated     DateTime        @default(now()) @db.Timestamp(6)
+  term        String
+  value       String
+  author      String
+  reviewed_by Int?
+  accepted_as Int?
+  obscure     obscure?        @relation(fields: [accepted_as], references: [id])
+  moderators  moderators?     @relation(fields: [reviewed_by], references: [user_id])
+}
+
+enum staging_status {
+  waiting
+  accepted
+  declined
+  request_changes
+  synonym
+}
