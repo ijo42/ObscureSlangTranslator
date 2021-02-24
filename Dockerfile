@@ -2,8 +2,9 @@
 FROM node:14-alpine AS builder
 WORKDIR /usr/src/app
 
-COPY package*.json ./
 COPY tsconfig*.json ./
+COPY ./prisma ./
+COPY package*.json ./
 
 COPY ./src ./src
 
