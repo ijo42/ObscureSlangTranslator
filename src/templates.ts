@@ -111,7 +111,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'DECLINE',
                     callback_data: 'D',
                     callback: () => {
-                        return db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, -1, match.stagingId]).then(() => {
+                        return db.query(queries.updateStaging, [StagingStatus.DECLINED, match.reviewer, null, match.stagingId]).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful declined");
                             return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
@@ -126,7 +126,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'REQUEST CHANGES',
                     callback_data: 'R',
                     callback: () => {
-                        return db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, -1, match.stagingId]).then(() => {
+                        return db.query(queries.updateStaging, [StagingStatus.REQUEST_CHANGES, match.reviewer, null, match.stagingId]).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful requested");
                             return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
