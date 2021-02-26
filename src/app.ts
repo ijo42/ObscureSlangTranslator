@@ -4,6 +4,7 @@ import { commands } from "./commands";
 import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
 import { processInline, processQuery } from "./inLineHandler";
+import prisma from './db';
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
@@ -12,7 +13,12 @@ global.debug = process.env.debug || false;
 // Create a bot that uses 'polling' to fetch new updates
 export const bot = new TelegramBot(token, {polling: true});
 
-setupFuzzyCache().then(() => setupModerateCache()).then(() => {
+async function main() {
+    prisma.$connect();
+
+    await setupFuzzyCache();
+    await setupModerateCache();
+
     bot.on('new_chat_members', msg => {
         bot.sendMessage(msg.chat.id, texts.welcome);
     });
@@ -30,11 +36,20 @@ setupFuzzyCache().then(() => setupModerateCache()).then(() => {
     commands.forEach(command => {
         bot.onText(command.regexp, command.callback);
     });
-    bot.setMyCommands(commands);
+
+    await bot.setMyCommands(commands);
 
     console.log(`Registered ${commands.length} commands`)
     bot.getMe().then(value => {
         if (value.username)
-            console.log(`Bot: https://t.me/${value.username}`)
-    })
-}).then(() => console.log('Bot setup successful'));
+            console.log(`Bot: https://t.me/${value.username}`);
+    });
+
+    console.log('Bot setup successful')
+}
+
+main()
+    .catch(e => {
+        bot.stopPolling().then(() => process.exit(1));
+        throw e;
+    });
