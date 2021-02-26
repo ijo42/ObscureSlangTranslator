@@ -21,7 +21,7 @@ COPY LICENSE ./
 COPY package*.json ./
 RUN npm ci --quiet --only=production
 
-СOPY --from=builder /usr/src/app/node_modules/@prisma/client/ ./node_modules/@prisma/client/
+COPY --from=builder /usr/src/app/node_modules/@prisma/client/ ./node_modules/@prisma/client/
 COPY --from=builder /usr/src/app/node_modules/.prisma/client/ ./node_modules/.prisma/client/
 
 COPY --from=builder /usr/src/app/dist ./dist
