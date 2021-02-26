@@ -8,7 +8,7 @@ COPY package*.json ./
 
 COPY ./src ./src
 
-RUN npm ci --quiet && npm run build
+RUN npm ci --quiet && npm run build && npx prisma generate
 
 # Production stage
 FROM node:14-alpine

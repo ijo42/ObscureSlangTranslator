@@ -1,6 +1,7 @@
 name: Build Workflow
 env:
   DOCKER_IMAGE: ${{ github.repository }}
+  DB_URL: postgresql://postgres:pass@localhost:5432/postgres?schema=public
 
 on:
   push:
@@ -55,6 +56,12 @@ jobs:
         with:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.DOCKER_TOKEN }}
+
+      - uses: danielweller-swp/postgresql-action@v2
+        with:
+          postgresql version: '13'
+          postgresql init scripts: 'prisma/migrations/init'
+          postgresql password: 'pass'
 
       - name: Build and push
         uses: docker/build-push-action@v2
