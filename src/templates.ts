@@ -115,7 +115,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 data: {
                                     status: 'accepted',
                                     reviewed_by: match.reviewer,
-                                    accepted_as: acceptedAs
+                                    accepted_as: acceptedAs,
+                                    updated: new Date()
                                 }
                             }).then(() => {
                                 bot.sendMessage(match.reviewingChat, "Successful accepted");
@@ -138,6 +139,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             data: {
                                 status: 'declined',
                                 reviewed_by: match.reviewer,
+                                updated: new Date()
                             }
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful declined");
@@ -161,6 +163,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             data: {
                                 status: 'request_changes',
                                 reviewed_by: match.reviewer,
+                                updated: new Date()
                             }
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful requested");
@@ -195,7 +198,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                         data: {
                                             status: "synonym",
                                             reviewed_by: match.reviewer,
-                                            accepted_as: matched.id
+                                            accepted_as: matched.id,
+                                            updated: new Date()
                                         }
                                     }).then(() => {
                                         fuse.remove((doc: ObscureEntry) => matched == doc)
