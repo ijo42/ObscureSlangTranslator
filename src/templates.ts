@@ -1,6 +1,6 @@
 import { BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
 import { bot } from "./app";
-import { fuse, fuzzySearchWithLen } from "./utils/fuzzySearch";
+import { editTerm, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
 import { formatAnswer, formatAnswerUnpreceded, grabUsrID } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
@@ -63,7 +63,7 @@ export async function processReplenishment(entry: ObscureEntry, author: string, 
             }
         }).then(val => {
             entry.id = val.id;
-            fuse.add(entry);
+            pushTerm(entry)
         });
     return entry.id;
 }
@@ -107,8 +107,8 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'ACCEPT',
                     callback_data: 'A',
                     callback: () => {
-                        return processReplenishment(match, match.author, false).then((acceptedAs) => {
-                            return prisma.staging.update({
+                        return processReplenishment(match, match.author, false).then((acceptedAs) =>
+                            prisma.staging.update({
                                 where: {
                                     id: match.stagingId
                                 },
@@ -124,15 +124,14 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     parse_mode: "MarkdownV2"
                                 });
                             }).catch((e: any) =>
-                                bot.sendMessage(match.reviewer, e.stack))
-                        })
+                                bot.sendMessage(match.reviewer, e.stack)))
                     }
                 },
                 {
                     text: 'DECLINE',
                     callback_data: 'D',
-                    callback: () => {
-                        return prisma.staging.update({
+                    callback: () =>
+                        prisma.staging.update({
                             where: {
                                 id: match.stagingId
                             },
@@ -147,16 +146,15 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
-                            bot.sendMessage(match.reviewer, e.stack));
-                    }
+                            bot.sendMessage(match.reviewer, e.stack))
                 }
             ],
             [
                 {
                     text: 'REQUEST CHANGES',
                     callback_data: 'R',
-                    callback: () => {
-                        return prisma.staging.update({
+                    callback: () =>
+                        prisma.staging.update({
                             where: {
                                 id: match.stagingId
                             },
@@ -171,8 +169,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
-                            bot.sendMessage(match.reviewer, e.stack));
-                    }
+                            bot.sendMessage(match.reviewer, e.stack))
                 },
                 {
                     text: 'SYNONYM',
@@ -202,9 +199,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                             updated: new Date()
                                         }
                                     }).then(() => {
-                                        fuse.remove((doc: ObscureEntry) => matched == doc)
-                                        matched.synonyms.push(match.term);
-                                        fuse.add(matched);
+                                        editTerm(matched, (t => t.synonyms.push(match.term)));
                                         bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
                                         return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
                                             parse_mode: "MarkdownV2"

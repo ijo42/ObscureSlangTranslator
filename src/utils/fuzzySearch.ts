@@ -22,7 +22,7 @@ const options = {
     ]
 }
 
-export let fuse: Fuse<ObscureEntry>;
+let fuse: Fuse<ObscureEntry>;
 
 export default async function setup() {
     await prisma.obscure.findMany({
@@ -35,6 +35,22 @@ export default async function setup() {
     }).then(val =>
         fuse = new Fuse(val, options))
         .catch((e: any) => console.error(e.stack));
+}
+
+export function pushTerm(term: ObscureEntry) {
+    const fuzzy = fuse.search({
+        $and: [{term: term.term}, {value: term.value}]
+    })[0];
+    if (fuzzy && fuzzy.score == 0)
+        throw new Error("Duplicate key");
+    else
+        fuse.add(term);
+}
+
+export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => void) {
+    fuse.remove((doc: ObscureEntry) => term == doc);
+    operation(term);
+    fuse.add(term);
 }
 
 export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => {
