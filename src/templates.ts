@@ -1,10 +1,16 @@
-import { BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message } from "node-telegram-bot-api";
+import {
+    BotCommand,
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+    ReplyKeyboardMarkup
+} from "node-telegram-bot-api";
 import { bot } from "./app";
-import { editTerm, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
+import { editTerm, fuzzySearch, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
 import { formatAnswer, formatAnswerUnpreceded, grabUsrID } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
-import { registerCallback } from "./inLineHandler";
 import prisma from "./db";
 
 export interface Command extends BotCommand {
@@ -26,6 +32,7 @@ export interface ModerateAction extends ObscureEntry {
     author: string;
     reviewer: number;
     reviewingChat: number;
+    msgId: number;
 }
 
 interface KeyboardButton extends InlineKeyboardButton {
@@ -81,19 +88,19 @@ export function keyboardWithConfirmation(onForce: () => void, text: string, rest
 
 }
 
-export function synonymMarkup(s: string[], run: ((s: number) => void), restrictedTo: number | boolean = false): Keyboard {
-    let keyboard: Keyboard = {
-        inline_keyboard: [[], [], []],
-        restrictedTo: restrictedTo
+export function synonymMarkup(s: string[]): ReplyKeyboardMarkup {
+    let keyboard: ReplyKeyboardMarkup = {
+        one_time_keyboard: true,
+        keyboard: [[], [], []],
+        selective: true
     };
-    for (let i = 0; i < s.length; i++) {
+
+    for (let i = 0; i < Math.min(3 - 1, s.length); i++) {
         if (!s[i])
             continue;
 
-        keyboard.inline_keyboard[i]?.push({
-            text: <string>s[i],
-            callback_data: `S${i}`,
-            callback: () => Promise.resolve(run(i))
+        keyboard.keyboard[i]?.push({
+            text: <string>s[i]
         });
     }
     return keyboard;
@@ -175,18 +182,14 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'SYNONYM',
                     callback_data: 'S',
                     callback: () => {
-                        const matchedEnters: ObscureEntry[] = fuzzySearchWithLen([match.term, match.value], 3).filter(value => value.value != undefined);
-                        const possibleEnters = matchedEnters.map((value: ObscureEntry) => formatAnswerUnpreceded(value));
-
-                        const replyMarkup = synonymMarkup(possibleEnters, (entryID: number) => {
-                            const matched = matchedEnters[entryID];
-                            if (!matched || !matched.id) {
-                                console.log(`undefined synonym on ${entryID}, ${JSON.stringify(matchedEnters)}`);
-                                return;
-                            }
-
+                        const matchedEnters: ObscureEntry[] = fuzzySearchWithLen(
+                            [match.term, match.value], 3)
+                            .filter(value => value.value != undefined);
+                        const replyMarkup = synonymMarkup(matchedEnters.map((value: ObscureEntry) =>
+                            formatAnswerUnpreceded(value)));
+                        const callback: (synonymTo: ObscureEntry) => void = (synonymTo: ObscureEntry) =>
                             // to resolve https://github.com/prisma/prisma/issues/5078
-                            return prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${matched.id}`
+                            prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${synonymTo.id}`
                                 .then(() => {
                                     prisma.staging.update({
                                         where: {
@@ -195,22 +198,37 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                         data: {
                                             status: "synonym",
                                             reviewed_by: match.reviewer,
-                                            accepted_as: matched.id,
+                                            accepted_as: synonymTo.id,
                                             updated: new Date()
                                         }
                                     }).then(() => {
-                                        editTerm(matched, (t => t.synonyms.push(match.term)));
+                                        editTerm(synonymTo, (t => t.synonyms.push(match.term)));
                                         bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
-                                        return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(matched)), {
+                                        return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(synonymTo)), {
                                             parse_mode: "MarkdownV2"
                                         });
                                     }).catch(e => console.error(e));
-                                }).catch(e => console.error(e))
-                        }, match.reviewer);
+                                }).catch(e => console.error(e));
 
-                        return bot.sendMessage(match.reviewingChat, "Select Synonym", {
-                            reply_markup: replyMarkup
-                        }).then(value => registerCallback(value, replyMarkup));
+                        return bot.sendMessage(match.reviewingChat, "Select Synonym (must reply)", {
+                            reply_markup: replyMarkup,
+                            reply_to_message_id: match.msgId
+                        }).then(m => {
+                            const listener = bot.onReplyToMessage(m.chat.id, m.message_id, (msg => {
+
+                                if (!(msg.text && msg.from?.id == match.reviewer &&
+                                    /^([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})$/
+                                        .test(msg.text)))
+                                    return;
+
+                                let fuzzy = fuzzySearch(msg.text?.replace(/(\s)?-(\s)?/, " ").split(" "))
+                                if (fuzzy) {
+                                    bot.removeReplyListener(listener);
+                                    callback(fuzzy);
+                                } else
+                                    bot.sendMessage(msg.chat.id, "I didn't find this term. Try to provide over inline");
+                            }))
+                        });
                     }
                 }
             ]

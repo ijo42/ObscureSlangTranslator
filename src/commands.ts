@@ -25,7 +25,7 @@ export const commands: Command[] = [
         regexp: /^(\/add )?([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})/,
         description: 'Command to suggest a new term',
         callback: (msg, match) => {
-            if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]))
+            if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]) || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = capitalize([match[2], match[3]]);
@@ -131,7 +131,8 @@ If mistake, click \`Force\``, {
                         term: res.term,
                         author: res.author,
                         reviewer: msg.from.id,
-                        reviewingChat: msg.chat.id
+                        reviewingChat: msg.chat.id,
+                        msgId: msg.message_id
                     };
                     const keyboard = moderateMarkup(match, msg.from.id);
 
