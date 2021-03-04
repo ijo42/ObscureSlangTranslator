@@ -7,6 +7,7 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
 import prisma from "./db";
+import { sendPic } from "./utils/drawing";
 
 export const commands: Command[] = [
     {
@@ -137,6 +138,18 @@ If mistake, click \`Force\``, {
                         reply_markup: keyboard
                     }).then(r => registerCallback(r, keyboard));
                 }).catch((e: any) => console.error(e.stack));
+        }
+    },
+    {
+        regexp: /\/picture ([\wа-яА-Я ]+)/, command: '/picture',
+        description: 'Get picture by term', callback: (msg, match) => {
+            if (msg.from && match) {
+                let entry = fuzzySearch(match);
+                if (entry)
+                    sendPic(msg.from.id, entry);
+                else
+                    bot.sendMessage(msg.from.id, 'IDK');
+            }
         }
     }
 ];
