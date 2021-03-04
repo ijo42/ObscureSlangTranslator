@@ -36,8 +36,10 @@ export const commands: Command[] = [
                 value: <string>vars[1]
             };
             const upload = () =>
-                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '').then(acceptedAs =>
-                    bot.sendMessage(msg.chat.id, formatDBSize(acceptedAs)))
+                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '')
+                    .then(acceptedAs =>
+                        bot.sendMessage(msg.chat.id, formatDBSize(acceptedAs)))
+                    .catch(e => bot.sendMessage(msg.chat.id, e))
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, 'Force', msg.from.id);
@@ -143,13 +145,11 @@ If mistake, click \`Force\``, {
     {
         regexp: /\/picture ([\wа-яА-Я ]+)/, command: '/picture',
         description: 'Get picture by term', callback: (msg, match) => {
-            if (msg.from && match) {
-                let entry = fuzzySearch(match);
-                if (entry)
-                    sendPic(msg.from.id, entry);
-                else
-                    bot.sendMessage(msg.from.id, 'IDK');
-            }
+            let entry = fuzzySearch(match);
+            if (entry)
+                sendPic(msg.chat.id, entry);
+            else
+                bot.sendMessage(msg.chat.id, 'IDK');
         }
     }
 ];
