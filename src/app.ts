@@ -3,6 +3,7 @@ import { texts } from "./texts";
 import { commands } from "./commands";
 import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
+import setupDrawing from "./utils/drawing";
 import { processInline, processQuery } from "./inLineHandler";
 import prisma from './db';
 
@@ -18,6 +19,7 @@ async function main() {
 
     await setupFuzzyCache();
     await setupModerateCache();
+    await setupDrawing();
 
     bot.on('new_chat_members', msg => {
         bot.sendMessage(msg.chat.id, texts.welcome);
