@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.2.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.1.0...v1.2.0) (2021-03-07)
+
+
+### Features
+
+* implement picture drawing ([9e92628](https://www.github.com/ijo42/ObscureSlangTranslator/commit/9e92628aea4977bf7798806d2bad39527d29e707))
+* reject fully duplicate ([2f0c4af](https://www.github.com/ijo42/ObscureSlangTranslator/commit/2f0c4af95ad206c718fdf263e93cd37320404c0b))
+* rework synonym providing w/ reply-keyboard ([4b43668](https://www.github.com/ijo42/ObscureSlangTranslator/commit/4b43668231a8118f018add6430bc0f10b510a372))
+* rework w/ prisma as ORM :art: ([a52e405](https://www.github.com/ijo42/ObscureSlangTranslator/commit/a52e405ac3270e9a1c6f3464448cbea60b6a0671))
+
+
+### Bug Fixes
+
+* update timestamp after moderate ([49b67c8](https://www.github.com/ijo42/ObscureSlangTranslator/commit/49b67c84953ab1dff562a6b79d47621e6b7ac4c2))
+
+
+### Performance Improvements
+
+* cache drawing stuff ([8084ab2](https://www.github.com/ijo42/ObscureSlangTranslator/commit/8084ab2f4888ad617226d55cc6596705c982b30a))
+
 ## [1.1.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.0.2...v1.1.0) (2021-02-21)
 
 
