@@ -44,5 +44,5 @@ export function promoteUser(promotable: number, promoter: number): Promise<numbe
         select: {
             "user_id": true
         }
-    }).then(() => moderators.push(promotable));
+    }).then(usr => moderators.push(usr.user_id));
 }
