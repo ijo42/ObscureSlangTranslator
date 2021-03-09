@@ -30,6 +30,14 @@ export const grabUsrID: (s: string) => string = (s: string) =>
 export const formatDBSize = (s: string | number) =>
     util.format(texts.dbSize, s.toString());
 
+export const reformatStr = (s: string) =>
+    s.replace("_", " ")
+        .replace(/ {2,}/g, ` `)
+        .replace(/([.,!?])(a-zA-Zа-яА-Я])/g, `$1 $2`);
+
+export const reformat: ([...st]: readonly any[]) => any = ([...st]) =>
+    st.map(str => reformatStr(str));
+
 export function randomString(size = 8) {
     return randomBytes(size)
         .toString('base64')

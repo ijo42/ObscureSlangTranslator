@@ -1,7 +1,7 @@
 import { Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
-import { capitalize, formatAnswer, formatDBSize, formatUsername } from "./utils/formatting";
+import { capitalize, formatAnswer, formatDBSize, formatUsername, reformat } from "./utils/formatting";
 import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
@@ -28,12 +28,17 @@ export const commands: Command[] = [
             if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]) || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
                 return;
             const chatId = msg.chat.id;
-            const vars: string[] = capitalize([match[2], match[3]]);
+            const vars: string[] = reformat(
+                capitalize([match[2], match[3]])
+            );
             const fuzzy = fuzzySearch(vars);
+            if (!(vars[0] && vars[1]))
+                throw new Error("Empty term array");
+
             const entry = {
                 id: -1, synonyms: [],
-                term: <string>vars[0],
-                value: <string>vars[1]
+                term: vars[0],
+                value: vars[1]
             };
             const upload = () =>
                 processReplenishment(entry, msg.from ? formatUsername(msg.from) : '')
