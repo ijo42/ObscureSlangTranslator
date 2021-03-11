@@ -8,20 +8,22 @@ datasource db {
 }
 
 model moderators {
-  id          Int       @id @default(autoincrement())
-  user_id     Int       @unique
+  id          Int         @id @default(autoincrement())
+  user_id     Int         @unique
   promoted_by Int
+  categories  categories?
   staging     staging[]
 }
 
 model obscure {
-  id        Int       @id @default(autoincrement())
-  term      String
-  value     String
-  author    String
-  submitted DateTime? @default(now()) @db.Timestamp(6)
-  synonyms  String[]
-  staging   staging[]
+  id         Int          @id @default(autoincrement())
+  term       String
+  value      String
+  author     String
+  submitted  DateTime?    @default(now()) @db.Timestamp(6)
+  synonyms   String[]
+  staging    staging[]
+  categories categories[] @relation("category_to_obscure")
 }
 
 model staging {
@@ -36,6 +38,16 @@ model staging {
   accepted_as Int?
   obscure     obscure?        @relation(fields: [accepted_as], references: [id])
   moderators  moderators?     @relation(fields: [reviewed_by], references: [user_id])
+}
+
+model categories {
+  id         Int        @id @default(autoincrement())
+  value      String
+  created    DateTime   @default(now()) @db.Timestamp(6)
+  updated    DateTime   @default(now()) @db.Timestamp(6)
+  author     Int
+  moderators moderators @relation(fields: [id], references: [id])
+  obscure    obscure[]  @relation("category_to_obscure")
 }
 
 enum staging_status {
