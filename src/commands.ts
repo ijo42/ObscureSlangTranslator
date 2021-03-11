@@ -8,6 +8,7 @@ import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
 import prisma from "./db";
 import { sendPic } from "./utils/drawing";
+import { User } from "node-telegram-bot-api";
 
 export const commands: Command[] = [
     {
@@ -156,6 +157,40 @@ If mistake, click \`Force\``, {
                 sendPic(msg.chat.id, entry);
             else
                 bot.sendMessage(msg.chat.id, 'IDK');
+        }
+    },
+    {
+        regexp: /\/categories (assign|new) (.+)/, command: '/categories',
+        description: "Main command to moderate categories",
+        callback: async (msg, match) => {
+            if (!msg.from || !hasRights(msg.from?.id) || !match)
+                bot.sendMessage(msg.chat.id, texts.hasNoRights);
+            else
+                switch (match?.[0]) {
+                    case 'assign':
+                        throw new Error("Not yet implemented");
+                    case 'new':
+                        if (match[1] && /[\wа-яА-Я]/.test(match[1])) {
+                            prisma.moderators.findUnique({
+                                where: {
+                                    user_id: msg.from.id,
+                                }, rejectOnNotFound: true,
+                                select: {id: true}
+                            }).then(usr => {
+                                prisma.categories.create({
+                                    data: {
+                                        value: <string>match[1],
+                                        author: usr.id
+                                    }
+                                });
+                            }).then(() =>
+                                bot.sendMessage((<User>msg.from).id, `Successful created new category ${match[1]}`));
+                        }
+                        break
+                    default:
+                        bot.sendMessage(msg.chat.id, texts.unrecognizedSubCommand);
+                        break;
+                }
         }
     }
 ];
