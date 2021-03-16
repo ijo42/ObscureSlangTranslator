@@ -18,16 +18,20 @@ export const registerCallback = (message: Message, callback: Keyboard) => {
 };
 
 export const processQuery = (query: CallbackQuery) => {
+    function restrictedKeyboardChecks(possibleKeyboard: Keyboard) {
+        return !possibleKeyboard.restrictedTo || possibleKeyboard.restrictedTo === query.from.id ||
+            (possibleKeyboard.restrictedTo === true && hasRights(query.from.id));
+    }
+
     if (query.message && "reply_markup" in query.message) {
         const possibleKeyboard = registeredCallbacks.get(query.message.message_id);
         if (possibleKeyboard)
             for (const columns of possibleKeyboard.inline_keyboard)
                 columns.find(val =>
-                    val.callback_data == query.data &&
-                    (!possibleKeyboard.restrictedTo || possibleKeyboard.restrictedTo === query.from.id ||
-                        (possibleKeyboard.restrictedTo === true && hasRights(query.from.id))))?.callback(query)
+                    val.callback_data == query.data && restrictedKeyboardChecks(possibleKeyboard))
+                        ?.callback(query)
                     .then(() =>
-                        registeredCallbacks.delete(query.message?.message_id || -1))
+                        registeredCallbacks.delete((<Message>query.message).message_id))
                     .then(() => bot.answerCallbackQuery(query.id))
                     .catch(e => bot.sendMessage(query.from.id, e.stack));
     }
