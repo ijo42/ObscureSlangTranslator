@@ -4,11 +4,12 @@ import {
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
-    ReplyKeyboardMarkup
+    ReplyKeyboardMarkup,
+    User
 } from "node-telegram-bot-api";
 import { bot } from "./app";
 import { editTerm, fuzzySearch, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
-import { formatAnswer, formatAnswerUnpreceded, grabUsrID } from "./utils/formatting";
+import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformat } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
@@ -229,6 +230,46 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     bot.sendMessage(msg.chat.id, "I didn't find this term. Try to provide over inline");
                             }))
                         });
+                    }
+                }
+            ]
+        ],
+        restrictedTo: restrictedTo
+    }
+}
+
+export function categorizeMarkup(chatId: number, msgId: number, restrictedTo: number): Keyboard {
+    return {
+        inline_keyboard: [
+            [
+                {
+                    text: 'Create new',
+                    callback_data: 'CREATE',
+                    callback: () => {
+                        return bot.editMessageText("Reply to this message w/ name of new Category", {
+                            message_id: msgId, chat_id: chatId
+                        }).then(message => {
+                            if (message) {
+                                bot.onReplyToMessage(chatId, msgId, (msg) => {
+                                    if (msg.from?.id == restrictedTo && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
+                                        prisma.moderators.findUnique({
+                                            where: {
+                                                user_id: msg.from.id,
+                                            }, rejectOnNotFound: true,
+                                            select: {id: true}
+                                        }).then(usr => {
+                                            prisma.categories.create({
+                                                data: {
+                                                    value: reformat([msg.text]),
+                                                    author: usr.id
+                                                }
+                                            });
+                                        }).then(() =>
+                                            bot.sendMessage((<User>msg.from).id, `Successful created new category ${reformat([msg.text])}`));
+                                    } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
+                                })
+                            }
+                        })
                     }
                 }
             ]
