@@ -33,8 +33,8 @@ export default async function setup() {
         .catch((e: any) => console.error(e.stack));
 }
 
-export function hasRights(userId: number): boolean {
-    return moderators.has(userId);
+export function hasRights(userId: number | undefined): number | undefined {
+    return !userId ? undefined : moderators.get(userId);
 }
 
 export function promoteUser(promotable: number, promoter: number) {
