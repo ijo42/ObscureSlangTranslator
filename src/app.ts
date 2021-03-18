@@ -15,7 +15,7 @@ global.debug = process.env.debug || false;
 export const bot = new TelegramBot(token, {polling: true});
 
 async function main() {
-    prisma.$connect();
+    await prisma.$connect();
 
     await setupFuzzyCache();
     await setupModerateCache();

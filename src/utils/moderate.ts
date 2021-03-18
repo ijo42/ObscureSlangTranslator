@@ -10,15 +10,15 @@ const moderators = new Map<number, number>();
 function firstStart() {
     if (moderators.size === 0) {
         let setupUUID = randomString();
-        console.info(format(texts.firstStart, `/setup ${setupUUID}`));
         bot.onText(/\/setup (\w{8})/, ((msg, match) => {
             const promotable = msg.from;
             if (promotable && match && match[1] === setupUUID) {
-                promoteUser(promotable.id, -1).then(() => setupUUID = '').then(() => {
-                    bot.sendMessage(promotable.id, texts.promoteAnnounce);
-                }).catch(e => bot.sendMessage(promotable.id, e.stack));
+                promoteUser(promotable.id, -1).then(() => setupUUID = '').then(() =>
+                    bot.sendMessage(promotable.id, texts.promoteAnnounce))
+                    .catch(e => bot.sendMessage(promotable.id, e.stack));
             }
         }));
+        console.info(format(texts.firstStart, `/setup ${setupUUID}`));
     }
 }
 
@@ -29,8 +29,7 @@ export default async function setup() {
             "user_id": true
         }
     }).then(val => val.forEach(usr => moderators.set(usr.user_id, usr.id)))
-        .then(() => firstStart())
-        .catch((e: any) => console.error(e.stack));
+        .then(() => firstStart());
 }
 
 export function hasRights(userId: number | undefined): number | undefined {
