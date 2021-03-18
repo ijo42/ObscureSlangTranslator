@@ -4,10 +4,11 @@ import { texts } from "../texts";
 import { format } from "util";
 import prisma from "../db";
 
-const moderators: number[] = [];
+const moderators = new Map<number, number>();
+              // TELEGRAM USER ID, MODERATOR ID
 
 function firstStart() {
-    if (moderators.length === 0) {
+    if (moderators.size === 0) {
         let setupUUID = randomString();
         console.info(format(texts.firstStart, `/setup ${setupUUID}`));
         bot.onText(/\/setup (\w{8})/, ((msg, match) => {
@@ -24,25 +25,27 @@ function firstStart() {
 export default async function setup() {
     await prisma.moderators.findMany({
         select: {
+            "id": true,
             "user_id": true
         }
-    }).then(val => moderators.push(...val.map(u => u.user_id)))
+    }).then(val => val.forEach(usr => moderators.set(usr.user_id, usr.id)))
         .then(() => firstStart())
         .catch((e: any) => console.error(e.stack));
 }
 
 export function hasRights(userId: number): boolean {
-    return moderators.includes(userId);
+    return moderators.has(userId);
 }
 
-export function promoteUser(promotable: number, promoter: number): Promise<number> {
+export function promoteUser(promotable: number, promoter: number) {
     return prisma.moderators.create({
         data: {
             promoted_by: promoter,
             user_id: promotable
         },
         select: {
+            "id": true,
             "user_id": true
         }
-    }).then(usr => moderators.push(usr.user_id));
+    }).then(usr => moderators.set(usr.user_id, usr.id));
 }
