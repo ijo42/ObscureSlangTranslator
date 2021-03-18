@@ -7,7 +7,7 @@ import {
     ReplyKeyboardMarkup,
 } from "node-telegram-bot-api";
 import { bot } from "./app";
-import { editTerm, fuzzySearch, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
+import { editTerm, findAndValidateTerm, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
 import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformat } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
@@ -134,7 +134,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 }
                             }).then(() => {
                                 bot.sendMessage(match.reviewingChat, "Successful accepted");
-                                return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                     parse_mode: "MarkdownV2"
                                 });
                             }).catch((e: any) =>
@@ -156,7 +156,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             }
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful declined");
-                            return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
+                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
@@ -179,7 +179,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             }
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, "Successful requested");
-                            return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
+                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
                         }).catch((e: any) =>
@@ -189,9 +189,9 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'SYNONYM',
                     callback_data: 'S',
                     callback: () => {
-                        const callback: (synonymTo: ObscureEntry) => void = (synonymTo: ObscureEntry) =>
+                        const callback: (originEntry: ObscureEntry) => void = (originEntry: ObscureEntry) =>
                             // to resolve https://github.com/prisma/prisma/issues/5078
-                            prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${synonymTo.id}`
+                            prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${originEntry.id}`
                                 .then(() => {
                                     prisma.staging.update({
                                         where: {
@@ -200,13 +200,13 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                         data: {
                                             status: "synonym",
                                             reviewed_by: match.reviewer,
-                                            accepted_as: synonymTo.id,
+                                            accepted_as: originEntry.id,
                                             updated: new Date()
                                         }
                                     }).then(() => {
-                                        editTerm(synonymTo, (t => t.synonyms.push(match.term)));
+                                        editTerm(originEntry, (t => t.synonyms.push(match.term)));
                                         bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
-                                        return bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(synonymTo)), {
+                                        bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
                                             parse_mode: "MarkdownV2"
                                         });
                                     }).catch(e => console.error(e));
@@ -216,20 +216,16 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             reply_markup: generateSynonymMarkup(match),
                             reply_to_message_id: match.msgId
                         }).then(m => {
-                            const listener = bot.onReplyToMessage(m.chat.id, m.message_id, (msg => {
+                            const listener = bot.onReplyToMessage(m.chat.id, m.message_id, msg => {
 
-                                if (!(msg.text && msg.from?.id == match.reviewer &&
-                                    /^([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})$/
-                                        .test(msg.text)))
+                                if (!msg.text || msg.from?.id != match.reviewer)
                                     return;
-
-                                let fuzzy = fuzzySearch(msg.text?.replace(/(\s)?-(\s)?/, " ").split(" "))
+                                const fuzzy = findAndValidateTerm(msg.text, msg.chat.id);
                                 if (fuzzy) {
                                     bot.removeReplyListener(listener);
                                     callback(fuzzy);
-                                } else
-                                    bot.sendMessage(msg.chat.id, "I didn't find this term. Try to provide over inline");
-                            }))
+                                }
+                            })
                         });
                     }
                 }

@@ -2,6 +2,7 @@ import Fuse from "fuse.js";
 import { ObscureEntry } from "../templates";
 import { formatAnswer } from "./formatting";
 import prisma from "../db";
+import { bot } from "../app";
 
 const options = {
     includeScore: true,
@@ -63,4 +64,16 @@ export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
     const entry = fuzzySearch(query);
     return entry ? formatAnswer(entry) : "*IDK*";
+}
+
+export const findAndValidateTerm = (text: string, chatId: number) => {
+
+    if (!(/^([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})$/.test(text)))
+        return;
+
+    let fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ").split(" "))
+    if(!fuzzy)
+        bot.sendMessage(chatId, "I didn't find this term. Try to provide over inline-mode");
+
+    return fuzzy;
 }
