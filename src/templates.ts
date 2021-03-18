@@ -89,19 +89,25 @@ export function keyboardWithConfirmation(onForce: () => void, text: string, rest
 
 }
 
-export function synonymMarkup(s: string[]): ReplyKeyboardMarkup {
+export function generateSynonymMarkup(entry: { term: string; value: string; }): ReplyKeyboardMarkup {
+    const matchedEnters: ReadonlyArray<String> = fuzzySearchWithLen(
+        [entry.term, entry.value], 3)
+        .filter(value => !!value.value)
+        .map((value: ObscureEntry) =>
+            formatAnswerUnpreceded(value));
+
     let keyboard: ReplyKeyboardMarkup = {
         one_time_keyboard: true,
         keyboard: [[], [], []],
         selective: true
     };
 
-    for (let i = 0; i < Math.min(3 - 1, s.length); i++) {
-        if (!s[i])
+    for (let i = 0; i < Math.min(3 - 1, matchedEnters.length); i++) {
+        if (!matchedEnters[i])
             continue;
 
         keyboard.keyboard[i]?.push({
-            text: <string>s[i]
+            text: <string>matchedEnters[i]
         });
     }
     return keyboard;
@@ -183,11 +189,6 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'SYNONYM',
                     callback_data: 'S',
                     callback: () => {
-                        const matchedEnters: ObscureEntry[] = fuzzySearchWithLen(
-                            [match.term, match.value], 3)
-                            .filter(value => value.value != undefined);
-                        const replyMarkup = synonymMarkup(matchedEnters.map((value: ObscureEntry) =>
-                            formatAnswerUnpreceded(value)));
                         const callback: (synonymTo: ObscureEntry) => void = (synonymTo: ObscureEntry) =>
                             // to resolve https://github.com/prisma/prisma/issues/5078
                             prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${synonymTo.id}`
@@ -212,7 +213,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 }).catch(e => console.error(e));
 
                         return bot.sendMessage(match.reviewingChat, "Select Synonym (must reply)", {
-                            reply_markup: replyMarkup,
+                            reply_markup: generateSynonymMarkup(match),
                             reply_to_message_id: match.msgId
                         }).then(m => {
                             const listener = bot.onReplyToMessage(m.chat.id, m.message_id, (msg => {
