@@ -33,8 +33,7 @@ export default async function setup() {
             synonyms: true
         }
     }).then(val =>
-        fuse = new Fuse(val, options))
-        .catch((e: any) => console.error(e.stack));
+        fuse = new Fuse(val, options));
 }
 
 export function pushTerm(term: ObscureEntry) {
