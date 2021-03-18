@@ -5,7 +5,6 @@ import {
     InlineKeyboardMarkup,
     Message,
     ReplyKeyboardMarkup,
-    User
 } from "node-telegram-bot-api";
 import { bot } from "./app";
 import { editTerm, fuzzySearch, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
@@ -13,6 +12,7 @@ import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformat } from "./uti
 import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
+import { hasRights } from "./utils/moderate";
 
 export interface Command extends BotCommand {
     regexp: RegExp;
@@ -245,32 +245,31 @@ export function categorizeMarkup(chatId: number, msgId: number, restrictedTo: nu
                 {
                     text: 'Create new',
                     callback_data: 'CREATE',
-                    callback: () => {
-                        return bot.editMessageText("Reply to this message w/ name of new Category", {
+                    callback: () =>
+                        bot.editMessageText("Reply to this message w/ name of new Category", {
                             message_id: msgId, chat_id: chatId
                         }).then(message => {
                             if (message) {
-                                bot.onReplyToMessage(chatId, msgId, (msg) => {
-                                    if (msg.from?.id == restrictedTo && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
-                                        prisma.moderators.findUnique({
-                                            where: {
-                                                user_id: msg.from.id,
-                                            }, rejectOnNotFound: true,
-                                            select: {id: true}
-                                        }).then(usr => {
-                                            prisma.categories.create({
-                                                data: {
-                                                    value: reformat([msg.text]),
-                                                    author: usr.id
-                                                }
-                                            });
-                                        }).then(() =>
-                                            bot.sendMessage((<User>msg.from).id, `Successful created new category ${reformat([msg.text])}`));
+                                const listenId = bot.onReplyToMessage(chatId, msgId, (msg) => {
+                                    let uid;
+                                    if ((uid = hasRights(msg.from?.id)) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
+                                        prisma.categories.create({
+                                            data: {
+                                                value: reformat([msg.text]),
+                                                author: uid
+                                            },
+                                            select: {
+                                                value: true,
+                                                moderators: true
+                                            }
+                                        }).then(ret =>
+                                            bot.sendMessage(ret.moderators.user_id,
+                                                `Successful created new category ${ret.value}`))
+                                            .then(() => bot.removeReplyListener(listenId));
                                     } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
-                                })
+                                });
                             }
                         })
-                    }
                 }
             ]
         ],
