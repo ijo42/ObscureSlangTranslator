@@ -235,7 +235,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
     }
 }
 
-export function categorizeMarkup(chatId: number, msgId: number, restrictedTo: number): Keyboard {
+export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard {
     return {
         inline_keyboard: [
             [
@@ -243,29 +243,28 @@ export function categorizeMarkup(chatId: number, msgId: number, restrictedTo: nu
                     text: 'Create new',
                     callback_data: 'CREATE',
                     callback: () =>
-                        bot.editMessageText("Reply to this message w/ name of new Category", {
-                            message_id: msgId, chat_id: chatId
-                        }).then(message => {
-                            if (message) {
-                                const listenId = bot.onReplyToMessage(chatId, msgId, (msg) => {
-                                    let uid;
-                                    if ((uid = hasRights(msg.from?.id)) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
-                                        prisma.categories.create({
-                                            data: {
-                                                value: reformat([msg.text]),
-                                                author: uid
-                                            },
-                                            select: {
-                                                value: true,
-                                                moderators: true
-                                            }
-                                        }).then(ret =>
-                                            bot.sendMessage(ret.moderators.user_id,
-                                                `Successful created new category ${ret.value}`))
-                                            .then(() => bot.removeReplyListener(listenId));
-                                    } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
-                                });
-                            }
+                        bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
+                            const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
+                                let uid;
+                                console.log(`summ: ${hasRights(msg.from?.id) && msg.text && /[\\wа-яА-Я]+/.test(msg.text)}`)
+                                if ((uid = hasRights(msg.from?.id)) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
+                                    console.log('triggered')
+                                    prisma.categories.create({ // TODO: don't creating. idk
+                                        data: {
+                                            value: reformat([msg.text]),
+                                            author: uid
+                                        },
+                                        select: {
+                                            value: true,
+                                            moderators: true
+                                        }
+                                    }).then(ret =>
+                                        bot.sendMessage(ret.moderators.user_id,
+                                            `Successful created new category ${ret.value}`))
+                                        .then(() => bot.removeReplyListener(listenId));
+                                } else
+                                    bot.sendMessage(msg.chat.id, texts.hasNoRights);
+                            });
                         })
                 }
             ]
