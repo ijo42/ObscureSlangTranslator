@@ -8,7 +8,7 @@ import {
 } from "node-telegram-bot-api";
 import { bot } from "./app";
 import { editTerm, findAndValidateTerm, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
-import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformat } from "./utils/formatting";
+import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformatStr } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
@@ -43,6 +43,23 @@ interface KeyboardButton extends InlineKeyboardButton {
 export interface Keyboard extends InlineKeyboardMarkup {
     inline_keyboard: KeyboardButton[][];
     restrictedTo: number | boolean;
+}
+
+async function processCategory(msg: string, author: number): Promise<string> {
+    return await prisma.categories.create({
+        data: {
+            value: reformatStr(msg),
+            author: author,
+            moderators: {
+                connect: {
+                    id: author
+                }
+            }
+        },
+        select: {
+            value: true
+        }
+    }).then(r => r.value);
 }
 
 export async function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<number> {
@@ -242,30 +259,20 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                 {
                     text: 'Create new',
                     callback_data: 'CREATE',
-                    callback: () =>
-                        bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
+                    callback: () => {
+                        return bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
                             const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
                                 let uid;
-                                console.log(`summ: ${hasRights(msg.from?.id) && msg.text && /[\\wа-яА-Я]+/.test(msg.text)}`)
                                 if ((uid = hasRights(msg.from?.id)) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
-                                    console.log('triggered')
-                                    prisma.categories.create({ // TODO: don't creating. idk
-                                        data: {
-                                            value: reformat([msg.text]),
-                                            author: uid
-                                        },
-                                        select: {
-                                            value: true,
-                                            moderators: true
-                                        }
-                                    }).then(ret =>
-                                        bot.sendMessage(ret.moderators.user_id,
-                                            `Successful created new category ${ret.value}`))
-                                        .then(() => bot.removeReplyListener(listenId));
+                                    console.log(`uid: ${uid}`);
+                                    processCategory(msg.text, uid).then(ret =>
+                                        bot.sendMessage(chatId, `Successful created new category ${ret}`)
+                                    ).then(() => bot.removeReplyListener(listenId));
                                 } else
                                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                             });
-                        })
+                        });
+                    }
                 }
             ]
         ],
