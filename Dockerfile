@@ -15,7 +15,8 @@ FROM node:14-alpine
 WORKDIR /usr/src/app
 
 ENV NODE_ENV=production \
-    NTBA_FIX_319=true
+    NTBA_FIX_319=true \
+    NTBA_FIX_350=true
 
 COPY ./LICENSE ./
 COPY ./resources/ ./resources
