@@ -7,12 +7,13 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
 import prisma from "./db";
+import regexpBuild from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
 
 export const commands: Command[] = [
     {
         command: '/size',
-        regexp: /\/size/,
+        regexp: regexpBuild("size"),
         description: 'Get last DB index',
         callback: (msg => {
             const chatId = msg.chat.id;
@@ -61,13 +62,13 @@ If mistake, click \`Force\``, {
 
     {
         command: '/start',
-        regexp: /\/start/,
+        regexp: regexpBuild("start"),
         description: 'Welcome-Command',
         callback: (msg) => bot.sendMessage(msg.chat.id, texts.welcome)
     },
     {
         command: '/get',
-        regexp: /\/get ([\wа-яА-Я ]+)/,
+        regexp: regexpBuild("get", "([a-zA-Z0-9а-яА-Я ]+)"),
         description: 'Get Fuzzy Terms',
         callback: (msg, match) =>
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
@@ -76,7 +77,7 @@ If mistake, click \`Force\``, {
     },
     {
         command: '/promote',
-        regexp: /\/promote/,
+        regexp: regexpBuild("promote"),
         description: 'Promotes a user',
         callback: (msg) => {
             const promoterId = msg.from?.id;
@@ -105,7 +106,7 @@ If mistake, click \`Force\``, {
     },
     {
         command: '/moderate',
-        regexp: /\/moderate/, description: 'Moderate an staging entry',
+        regexp: regexpBuild("moderate"), description: 'Moderate an staging entry',
         callback: msg => {
             if (!msg.from || !hasRights(msg.from?.id))
                 return bot.sendMessage(msg.chat.id, texts.hasNoRights);
@@ -149,7 +150,7 @@ If mistake, click \`Force\``, {
         }
     },
     {
-        regexp: /\/picture ([\wа-яА-Я ]+)/, command: '/picture',
+        regexp: regexpBuild("picture", "([a-zA-Z0-9а-яА-Я ]+)"), command: '/picture',
         description: 'Get picture by term', callback: (msg, match) => {
             let entry = fuzzySearch(match);
             if (entry)
