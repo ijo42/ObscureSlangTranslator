@@ -207,27 +207,34 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     callback_data: 'S',
                     callback: () => {
                         const callback: (originEntry: ObscureEntry) => void = (originEntry: ObscureEntry) =>
-                            // to resolve https://github.com/prisma/prisma/issues/5078
-                            prisma.$executeRaw`UPDATE obscure SET synonyms = array_prepend(${match.term}, synonyms) WHERE id = ${originEntry.id}`
-                                .then(() => {
-                                    prisma.staging.update({
-                                        where: {
-                                            id: match.stagingId
-                                        },
-                                        data: {
-                                            status: "synonym",
-                                            reviewed_by: match.reviewer,
-                                            accepted_as: originEntry.id,
-                                            updated: new Date()
-                                        }
-                                    }).then(() => {
-                                        editTerm(originEntry, (t => t.synonyms.push(match.term)));
-                                        bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
-                                        bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
-                                            parse_mode: "MarkdownV2"
-                                        });
-                                    }).catch(e => console.error(e));
+                            prisma.obscure.update({
+                                where: {
+                                    id: originEntry.id
+                                },
+                                data: {
+                                    synonyms: {
+                                        push: match.term,
+                                    },
+                                },
+                            }).then(() => {
+                                prisma.staging.update({
+                                    where: {
+                                        id: match.stagingId
+                                    },
+                                    data: {
+                                        status: "synonym",
+                                        reviewed_by: match.reviewer,
+                                        accepted_as: originEntry.id,
+                                        updated: new Date()
+                                    }
+                                }).then(() => {
+                                    editTerm(originEntry, (t => t.synonyms.push(match.term)));
+                                    bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
+                                    bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
+                                        parse_mode: "MarkdownV2"
+                                    });
                                 }).catch(e => console.error(e));
+                            }).catch(e => console.error(e));
 
                         return bot.sendMessage(match.reviewingChat, "Select Synonym (must reply)", {
                             reply_markup: generateSynonymMarkup(match),
