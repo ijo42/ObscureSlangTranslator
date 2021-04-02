@@ -12,7 +12,7 @@
   "author": "ijo42 <admin@ijo42.ru>",
   "license": "MPL-2.0",
   "dependencies": {
-    "@prisma/client": "^2.19.0",
+    "@prisma/client": "^2.20.1",
     "fuse.js": "^6.4.6",
     "jimp": "^0.16.1",
     "node-telegram-bot-api": "^0.51.0"
