@@ -13,6 +13,7 @@ import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
 import { hasRights } from "./utils/moderate";
+import { compiledRegexp } from "./utils/regexpBuilder";
 
 export interface Command extends BotCommand {
     regexp: RegExp;
@@ -261,18 +262,17 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                 {
                     text: 'Create new',
                     callback_data: 'CREATE',
-                    callback: () => {
-                        return bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
+                    callback: () =>
+                        bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
                             const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
-                                if (msg.from && hasRights(msg.from.id) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
+                                if (msg.from && hasRights(msg.from.id) && msg.text && compiledRegexp.categoryDef.test(msg.text)) {
                                     processCategory(msg.text, msg.from.id).then(ret =>
                                         bot.sendMessage(chatId, `Successful created new category ${ret}`)
                                     ).then(() => bot.removeReplyListener(listenId));
                                 } else
                                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                             });
-                        });
-                    }
+                        })
                 }
             ]
         ],

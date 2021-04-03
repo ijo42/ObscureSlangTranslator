@@ -1,4 +1,4 @@
-import { Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
+import { categorizeMarkup, Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
 import { capitalize, formatAnswer, formatDBSize, formatUsername, reformat } from "./utils/formatting";
@@ -7,7 +7,7 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
 import prisma from "./db";
-import regexpBuild from "./utils/regexpBuilder";
+import regexpBuild, { baseRegexp } from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
 
 export const commands: Command[] = [
@@ -68,7 +68,7 @@ If mistake, click \`Force\``, {
     },
     {
         command: '/get',
-        regexp: regexpBuild("get", "([a-zA-Z0-9а-яА-Я ]+)"),
+        regexp: regexpBuild("get", baseRegexp.searchableExp),
         description: 'Get Fuzzy Terms',
         callback: (msg, match) =>
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
@@ -154,7 +154,7 @@ If mistake, click \`Force\``, {
         }
     },
     {
-        regexp: regexpBuild("picture", "([a-zA-Z0-9а-яА-Я ]+)"), command: '/picture',
+        regexp: regexpBuild("picture", baseRegexp.searchableExp), command: '/picture',
         description: 'Get picture by term', callback: (msg, match) => {
             let entry = fuzzySearch(match);
             if (entry)
