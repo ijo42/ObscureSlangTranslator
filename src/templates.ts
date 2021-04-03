@@ -49,12 +49,7 @@ async function processCategory(msg: string, author: number): Promise<string> {
     return await prisma.categories.create({
         data: {
             value: reformatStr(msg),
-            author: author,
-            moderators: {
-                connect: {
-                    id: author
-                }
-            }
+            author: author
         },
         select: {
             value: true
@@ -269,10 +264,8 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                     callback: () => {
                         return bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
                             const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
-                                let uid;
-                                if ((uid = hasRights(msg.from?.id)) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
-                                    console.log(`uid: ${uid}`);
-                                    processCategory(msg.text, uid).then(ret =>
+                                if (msg.from && hasRights(msg.from.id) && msg.text && /[\wа-яА-Я]+/.test(msg.text)) {
+                                    processCategory(msg.text, msg.from.id).then(ret =>
                                         bot.sendMessage(chatId, `Successful created new category ${ret}`)
                                     ).then(() => bot.removeReplyListener(listenId));
                                 } else
