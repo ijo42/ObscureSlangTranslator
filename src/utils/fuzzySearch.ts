@@ -3,6 +3,7 @@ import { ObscureEntry } from "../templates";
 import { formatAnswer } from "./formatting";
 import prisma from "../db";
 import { bot } from "../app";
+import { compiledRegexp } from "./regexpBuilder";
 
 const options = {
     includeScore: true,
@@ -68,12 +69,37 @@ export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[
 
 export const findAndValidateTerm = (text: string, chatId: number) => {
 
-    if (!(/^([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})$/.test(text)))
+    if (!(compiledRegexp.fullMatch.test(text)))
         return;
 
-    let fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ").split(" "))
-    if(!fuzzy)
+    let fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ").split(" "));
+    if (!fuzzy)
         bot.sendMessage(chatId, "I didn't find this term. Try to provide over inline-mode");
 
     return fuzzy;
 }
+
+export const findAndValidateCategory: (text: string) => Promise<undefined | {
+    value: string;
+    id: number;
+} | null> = async (text: string) => {
+
+    if (!(compiledRegexp.categoryDef.test(text)))
+        return;
+    return prisma.categories.findFirst({
+        where: {
+            value: text
+        },
+        select: {
+            value: true,
+            id: true
+        }
+    }).then(e => e);
+}
+
+export const findByIds = (ids: number[]) =>
+    ids.map(termId => fuse.search({
+        id: termId.toString()
+    }, {
+        limit: 1
+    })).map(e => e[0]?.item);

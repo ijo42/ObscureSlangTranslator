@@ -7,7 +7,14 @@ import {
     ReplyKeyboardMarkup,
 } from "node-telegram-bot-api";
 import { bot } from "./app";
-import { editTerm, findAndValidateTerm, fuzzySearchWithLen, pushTerm } from "./utils/fuzzySearch";
+import {
+    editTerm,
+    findAndValidateCategory,
+    findAndValidateTerm,
+    findByIds,
+    fuzzySearchWithLen,
+    pushTerm
+} from "./utils/fuzzySearch";
 import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformatStr } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
@@ -102,13 +109,7 @@ export function keyboardWithConfirmation(onForce: () => void, text: string, rest
 
 }
 
-export function generateSynonymMarkup(entry: { term: string; value: string; }): ReplyKeyboardMarkup {
-    const matchedEnters: ReadonlyArray<String> = fuzzySearchWithLen(
-        [entry.term, entry.value], 3)
-        .filter(value => !!value.value)
-        .map((value: ObscureEntry) =>
-            formatAnswerUnpreceded(value));
-
+function genNStringMarkup(matchedEnters: ReadonlyArray<String>): ReplyKeyboardMarkup {
     let keyboard: ReplyKeyboardMarkup = {
         one_time_keyboard: true,
         keyboard: [[], [], []],
@@ -202,6 +203,16 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: 'SYNONYM',
                     callback_data: 'S',
                     callback: () => {
+                        function generateSynonymMarkup(entry: { term: string; value: string; }): ReplyKeyboardMarkup {
+                            const matchedEnters: ReadonlyArray<String> = fuzzySearchWithLen(
+                                [entry.term, entry.value], 3)
+                                .filter(value => !!value.value)
+                                .map((value: ObscureEntry) =>
+                                    formatAnswerUnpreceded(value));
+
+                            return genNStringMarkup(matchedEnters);
+                        }
+
                         const callback: (originEntry: ObscureEntry) => void = (originEntry: ObscureEntry) =>
                             prisma.obscure.update({
                                 where: {
@@ -273,7 +284,78 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                             });
                         })
-                }
+                },
+                {
+                    text: 'Assign',
+                    callback_data: 'ASSIGN',
+                    callback: async () => {
+                        let categoriesKeyboard!: ReplyKeyboardMarkup;
+                        let obscureKeyboard!: ReplyKeyboardMarkup;
+
+                        prisma.categories.findMany({
+                            select: {
+                                value: true
+                            },
+                            take: 3
+                        }).then(c => {
+                            categoriesKeyboard = genNStringMarkup(c.map(cat => cat.value));
+                        });
+
+                        await prisma.obscure.findMany({
+                            where: {
+                                categories: undefined
+                            },
+                            select: {
+                                id: true
+                            },
+                            take: 3
+                        }).then(i =>
+                            obscureKeyboard = genNStringMarkup(findByIds(i.map(e => e.id))
+                                .filter(e => !!e)
+                                .map(e => formatAnswerUnpreceded(<ObscureEntry>e))))
+
+
+                        return bot.sendMessage(chatId, "Reply to this message w/ term. May provide over in-line", {
+                            reply_markup: obscureKeyboard
+                        }).then(termProvideMsg => {
+                            const listenId = bot.onReplyToMessage(termProvideMsg.chat.id, termProvideMsg.message_id, termProvidedMsg => {
+                                if (termProvidedMsg.from && hasRights(termProvidedMsg.from.id) && termProvidedMsg.text && compiledRegexp.fullMatch.test(termProvidedMsg.text)) {
+                                    const providedTerm = findAndValidateTerm(termProvidedMsg.text, termProvidedMsg.chat.id);
+                                    bot.removeReplyListener(listenId)
+                                    if (!providedTerm)
+                                        return;
+                                    return bot.sendMessage(chatId, "Reply to this message w/ category name", {
+                                        reply_markup: categoriesKeyboard
+                                    }).then(categoryProvideMsg => {
+                                        const listenId = bot.onReplyToMessage(categoryProvideMsg.chat.id, categoryProvideMsg.message_id, categoryProvidedMsg => {
+                                            if (categoryProvidedMsg.from && hasRights(categoryProvidedMsg.from.id) && categoryProvidedMsg.text && compiledRegexp.categoryDef.test(categoryProvidedMsg.text)) {
+                                                return findAndValidateCategory(categoryProvidedMsg.text).then(providedCategory => {
+                                                    if (!providedCategory) {
+                                                        bot.sendMessage(chatId, "I didn't find this category");
+                                                        return;
+                                                    }
+                                                    bot.removeReplyListener(listenId)
+                                                    return prisma.obscure.update({
+                                                        where: {
+                                                            id: providedTerm.id
+                                                        },
+                                                        data: {
+                                                            categories: {
+                                                                connect: {id: providedCategory.id}
+                                                            }
+                                                        }
+                                                    })
+                                                }).then(() => bot.sendMessage(categoryProvidedMsg.chat.id, "Successful linked"));
+                                            } else
+                                                return bot.sendMessage(categoryProvideMsg.chat.id, texts.hasNoRights);
+                                        });
+                                    });
+                                } else
+                                    return bot.sendMessage(termProvidedMsg.chat.id, texts.hasNoRights);
+                            });
+                        });
+                    }
+                },
             ]
         ],
         restrictedTo: restrictedTo

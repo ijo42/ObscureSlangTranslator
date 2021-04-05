@@ -162,5 +162,17 @@ If mistake, click \`Force\``, {
             else
                 bot.sendMessage(msg.chat.id, 'IDK');
         }
+    },
+    {
+        regexp: regexpBuild("category"), command: '/category',
+        description: 'Category moderating command',
+        callback: (msg) => {
+            if (msg.from && hasRights(msg.from.id)) {
+                const keyboard = categorizeMarkup(msg.chat.id, msg.from?.id)
+                bot.sendMessage(msg.chat.id, 'Choose an action', {
+                    reply_markup: keyboard
+                }).then(r => registerCallback(r, keyboard));
+            }
+        }
     }
 ];
