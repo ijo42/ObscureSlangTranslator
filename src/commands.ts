@@ -159,9 +159,10 @@ If mistake, click \`Force\``, {
         regexp: regexpBuild("picture", baseRegexp.searchableExp), command: '/picture',
         description: 'Get picture by term', callback: (msg, match) => {
             let entry = fuzzySearch(match);
-            if (entry)
+            if (entry) {
                 sendPic(msg.chat.id, entry);
-            else
+                requestTermFeedback(entry, msg);
+            } else
                 bot.sendMessage(msg.chat.id, 'IDK');
         }
     },
@@ -185,6 +186,7 @@ export const defaultCommand = {
             const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
+                requestTermFeedback(entry, msg, true);
             } else
                 bot.sendMessage(msg.chat.id, 'IDK');
         }
