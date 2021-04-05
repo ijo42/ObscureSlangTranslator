@@ -25,7 +25,7 @@ export const commands: Command[] = [
 
     {
         command: '/add',
-        regexp: regexpBuild('/add', baseRegexp.lazyMatch),
+        regexp: regexpBuild('add', baseRegexp.lazyMatch),
         description: 'Command to suggest a new term',
         callback: (msg, match) => {
             if (!match || !msg.from || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
@@ -182,7 +182,7 @@ If mistake, click \`Force\``, {
 export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
     callback: (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-        if (msg.from && msg.chat.type == 'private') {
+        if (msg.from && msg.chat.type == 'private' && msg.text && !msg.text.startsWith('/')) {
             const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);

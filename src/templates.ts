@@ -298,9 +298,6 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                 }).then(c => genNStringMarkup(c.map(cat => cat.value))),
                             genObscureKeyboard = () =>
                                 prisma.obscure.findMany({
-                                    where: {
-                                        categories: undefined
-                                    },
                                     select: {
                                         id: true
                                     },
