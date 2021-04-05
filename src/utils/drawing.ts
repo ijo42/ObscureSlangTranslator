@@ -2,6 +2,7 @@ import { bot } from "../app";
 import Jimp from "jimp";
 import { ObscureEntry } from "../templates";
 import { Font } from "@jimp/plugin-print";
+import { formatAnswer } from "./formatting";
 
 let template!: Jimp;
 let titleFont!: Font;
@@ -33,6 +34,8 @@ export function sendPic(id: number | string, entry: ObscureEntry) {
             text: `#${entry.id}`
         }, image.getWidth());
 
-        image.getBufferAsync(Jimp.MIME_PNG).then(i => bot.sendPhoto(id, i, {}))
+        image.getBufferAsync(Jimp.MIME_PNG).then(i => bot.sendPhoto(id, i, {
+            caption: formatAnswer(entry)
+        }))
     });
 }
