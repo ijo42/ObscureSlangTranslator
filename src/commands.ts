@@ -7,8 +7,10 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
 import prisma from "./db";
-import regexpBuild, { baseRegexp } from "./utils/regexpBuilder";
+import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
+import TelegramBot from "node-telegram-bot-api";
+import { requestTermFeedback } from "./utils/telemetry";
 
 export const commands: Command[] = [
     {
@@ -176,3 +178,15 @@ If mistake, click \`Force\``, {
         }
     }
 ];
+export const defaultCommand = {
+    regexp: compiledRegexp.searchableExp,
+    callback: (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+        if (msg.from && msg.chat.type == 'private') {
+            const entry = fuzzySearch(match);
+            if (entry) {
+                sendPic(msg.chat.id, entry);
+            } else
+                bot.sendMessage(msg.chat.id, 'IDK');
+        }
+    }
+}

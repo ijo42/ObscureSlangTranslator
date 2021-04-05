@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { texts } from "./texts";
-import { commands } from "./commands";
+import { commands, defaultCommand } from "./commands";
 import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
 import setupDrawing from "./utils/drawing";
@@ -38,6 +38,8 @@ async function main() {
     commands.forEach(command => {
         bot.onText(command.regexp, command.callback);
     });
+
+    bot.onText(defaultCommand.regexp, defaultCommand.callback);
 
     await bot.setMyCommands(commands);
 
