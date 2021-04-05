@@ -13,6 +13,7 @@ model moderators {
   promoted_by Int
   categories  categories[]
   staging     staging[]
+  telemetry   telemetry[]
 }
 
 model obscure {
@@ -23,6 +24,7 @@ model obscure {
   submitted  DateTime?    @default(now()) @db.Timestamp(6)
   synonyms   String[]
   staging    staging[]
+  telemetry  telemetry[]
   categories categories[] @relation("category_to_obscure")
 }
 
@@ -48,6 +50,18 @@ model categories {
   author     Int
   moderators moderators @relation(fields: [author], references: [user_id])
   obscure    obscure[]  @relation("category_to_obscure")
+}
+
+model telemetry {
+  id                Int         @id @default(autoincrement())
+  requested_term_id Int
+  author            String
+  is_useful         Boolean?
+  created           DateTime    @default(now()) @db.Timestamp(6)
+  moderated_at      DateTime?   @db.Timestamp(6)
+  moderated_by      Int?
+  moderators        moderators? @relation(fields: [moderated_by], references: [user_id])
+  obscure           obscure     @relation(fields: [requested_term_id], references: [id])
 }
 
 enum staging_status {
