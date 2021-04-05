@@ -29,7 +29,7 @@ export const processQuery = (query: CallbackQuery) => {
             for (const columns of possibleKeyboard.inline_keyboard)
                 columns.find(val =>
                     val.callback_data == query.data && restrictedKeyboardChecks(possibleKeyboard))
-                        ?.callback(query)
+                    ?.callback(query)
                     .then(() =>
                         registeredCallbacks.delete((<Message>query.message).message_id))
                     .then(() => bot.answerCallbackQuery(query.id))
@@ -37,12 +37,15 @@ export const processQuery = (query: CallbackQuery) => {
     }
 }
 
-export const processInline = (query: TelegramBot.InlineQuery) => bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 50).map(value => <InlineQueryResultArticle>{
-    type: 'article',
-    id: randomInt(10000).toString(),
-    title: value.term,
-    input_message_content: <InputTextMessageContent>{
-        message_text: formatAnswer(value),
-        parse_mode: "MarkdownV2"
-    }
-}));
+export const processInline = (query: TelegramBot.InlineQuery) =>
+    bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value =>
+        <InlineQueryResultArticle>{
+            type: 'article',
+            id: randomInt(10000).toString(),
+            title: value.term,
+            input_message_content: <InputTextMessageContent>{
+                message_text: formatAnswer(value),
+                parse_mode: "MarkdownV2"
+            }
+        })
+    );
