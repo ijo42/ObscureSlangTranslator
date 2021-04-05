@@ -25,14 +25,14 @@ export const commands: Command[] = [
 
     {
         command: '/add',
-        regexp: /^(\/add )?([\wа-яА-Я]{2,})(?:(?:\s?-\s?)|\s+)([\wа-яА-Я,.)(\s-]{2,})/,
+        regexp: regexpBuild('/add', baseRegexp.lazyMatch),
         description: 'Command to suggest a new term',
         callback: (msg, match) => {
-            if (!match || !msg.from || (msg.chat.type !== 'private' && !match[1]) || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
+            if (!match || !msg.from || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = reformat(
-                capitalize([match[2], match[3]])
+                capitalize([match[1], match[2]])
             );
             const fuzzy = fuzzySearch(vars);
             if (!(vars[0] && vars[1]))
