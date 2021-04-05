@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.2.0...v1.3.0) (2021-04-05)
+
+
+### Features
+
+* additional formatting checks ([3d63254](https://www.github.com/ijo42/ObscureSlangTranslator/commit/3d63254ca5a3cfee3ec269d475eb7929c9aefe2b))
+* category moderating command ([46861c9](https://www.github.com/ijo42/ObscureSlangTranslator/commit/46861c97212a1df97eb669daea10d7178e964789))
+* possible to use command w/ bot mention ([535c2bb](https://www.github.com/ijo42/ObscureSlangTranslator/commit/535c2bb418cdf96ac135d67cdaa4841ac81613a5))
+* print term number on term's picture ([81dd21f](https://www.github.com/ijo42/ObscureSlangTranslator/commit/81dd21f4778697ec750d3e526142382d3cb955f3))
+* report IDK answers ([10d21bc](https://www.github.com/ijo42/ObscureSlangTranslator/commit/10d21bcbc732bb89b5d65cc1dfe1d2cf1c688199))
+
+
+### Bug Fixes
+
+* async setup related ([ff092c4](https://www.github.com/ijo42/ObscureSlangTranslator/commit/ff092c4764d64f85c11a02283743e53aa2d1b23b))
+* category creation saves internal UID ([0ff7040](https://www.github.com/ijo42/ObscureSlangTranslator/commit/0ff7040f73ea5d055a67698bd2336ff7a1271fab))
+* category creator relation ([45448a7](https://www.github.com/ijo42/ObscureSlangTranslator/commit/45448a7e3bae39edecc6cb8abeab25c5e859a4c7))
+* change formatting for attached picture ([32eeded](https://www.github.com/ijo42/ObscureSlangTranslator/commit/32eededdb85f94fb98e65118d4ac4b788037863c))
+* moderator promotion impossibility ([e110ca3](https://www.github.com/ijo42/ObscureSlangTranslator/commit/e110ca37c14190ea9ea47530351b4e5438e8554a))
+
 ## [1.2.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.1.0...v1.2.0) (2021-03-07)
 
 
