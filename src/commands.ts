@@ -10,7 +10,7 @@ import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
 import TelegramBot from "node-telegram-bot-api";
-import { requestTermFeedback } from "./utils/telemetry";
+import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
 
 export const commands: Command[] = [
     {
@@ -162,8 +162,10 @@ If mistake, click \`Force\``, {
             if (entry) {
                 sendPic(msg.chat.id, entry);
                 requestTermFeedback(entry, msg);
-            } else
+            } else {
                 bot.sendMessage(msg.chat.id, 'IDK');
+                requestIDKFeedback(msg);
+            }
         }
     },
     {
@@ -187,8 +189,10 @@ export const defaultCommand = {
             if (entry) {
                 sendPic(msg.chat.id, entry);
                 requestTermFeedback(entry, msg, true);
-            } else
+            } else {
                 bot.sendMessage(msg.chat.id, 'IDK');
+                requestIDKFeedback(msg);
+            }
         }
     }
 }

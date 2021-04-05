@@ -24,34 +24,75 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
 
         const markup: Keyboard = {
             inline_keyboard: [
-                [{
-                    text: 'Yes!',
-                    callback_data: 'Y',
-                    callback: _query =>
-                        prisma.telemetry.update({
+                [
+                    {
+                        text: 'Yes!',
+                        callback_data: 'Y',
+                        callback: () =>
+                            prisma.telemetry.update({
+                                where: e,
+                                data: {
+                                    is_useful: true
+                                }
+                            }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"))
+                    },
+                    {
+                        text: 'No',
+                        callback_data: 'N',
+                        callback: () => prisma.telemetry.update({
                             where: e,
                             data: {
-                                is_useful: true
+                                is_useful: false,
+                                origin_message: originalMsg.text
                             }
                         }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"))
-                }],
-                [{
-                    text: 'No',
-                    callback_data: 'N',
-                    callback: _query => prisma.telemetry.update({
-                        where: e,
-                        data: {
-                            is_useful: false
-                        }
-                    }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"))
-                }]
+                    }
+                ]
             ],
             restrictedTo: originalMsg.from.id
         }
 
-        bot.sendMessage(originalMsg.chat.id, "Did it's helpful?",
+        bot.sendMessage(originalMsg.chat.id, "Was this helpful?",
             {
                 reply_markup: markup
             }).then(r => registerCallback(r, markup));
     });
+}
+
+export function requestIDKFeedback(originalMsg: Message) {
+    if (!originalMsg.from)
+        return;
+
+    const markup: Keyboard = {
+        inline_keyboard: [
+            [
+                {
+                    text: 'Yes',
+                    callback_data: 'Y',
+                    callback: () => {
+                        if (originalMsg.from)
+                            return prisma.telemetry.create({
+                                data: {
+                                    is_useful: false,
+                                    author: formatUsername(originalMsg.from),
+                                    origin_message: originalMsg.text
+                                }
+                            }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"));
+                        return Promise.resolve();
+                    }
+                },
+                {
+                    text: 'No',
+                    callback_data: 'N',
+                    callback: () => Promise.resolve()
+                }
+            ]
+        ],
+        restrictedTo: originalMsg.from.id
+    }
+
+    bot.sendMessage(originalMsg.chat.id, "Should I report this?",
+        {
+            reply_markup: markup
+        }).then(r => registerCallback(r, markup));
 }

@@ -54,14 +54,15 @@ model categories {
 
 model telemetry {
   id                Int         @id @default(autoincrement())
-  requested_term_id Int
+  requested_term_id Int?
   author            String
+  origin_message    String?
   is_useful         Boolean?
   created           DateTime    @default(now()) @db.Timestamp(6)
   moderated_at      DateTime?   @db.Timestamp(6)
   moderated_by      Int?
   moderators        moderators? @relation(fields: [moderated_by], references: [user_id])
-  obscure           obscure     @relation(fields: [requested_term_id], references: [id])
+  obscure           obscure?     @relation(fields: [requested_term_id], references: [id])
 }
 
 enum staging_status {
