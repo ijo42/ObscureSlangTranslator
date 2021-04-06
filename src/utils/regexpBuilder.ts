@@ -7,10 +7,10 @@ export default function build(command: string, args: string | undefined = undefi
 export const baseRegexp = {
     mention: "@[a-zA-Z0-9_]{5,}",
     botMention: "@[a-zA-Z0-9_]{5,}_bot",
-    searchableExp: "([a-zA-Zа-яА-Я0-9_ ]+)",
-    categoryDef: "[a-zA-Zа-яА-Я0-9_]+",
-    fullMatch: "([a-zA-Zа-яА-Я0-9_]{2,}) - ([a-zA-Zа-яА-Я0-9_,.)( -]{2,})",
-    lazyMatch: "([a-zA-Zа-яА-Я0-9_]{2,})(?:(?: ?- ?)| +)([a-zA-Zа-яА-Я0-9_,.)( -]{2,})"
+    searchableExp: "([a-zA-Zа-яА-ЯёЁ0-9_ ]+)",
+    categoryDef: "[a-zA-Zа-яА-ЯёЁ0-9_]+",
+    fullMatch: "([a-zA-Zа-яА-ЯёЁ0-9_]{2,}) - ([a-zA-Zа-яА-ЯёЁ0-9_,.)( -]{2,})",
+    lazyMatch: "([a-zA-Zа-яА-ЯёЁ0-9_]{2,})(?:(?: ?- ?)| +)([a-zA-Zа-яА-ЯёЁ0-9_,.)( -]{2,})"
 }
 
 export const compiledRegexp = {
