@@ -8,9 +8,9 @@ export const texts = {
     successfulPromoting: 'Повышение успешно',
     firstStart: 'Это первый запуск, получите права модератора при помощи команды: `%s`',
     moderateAnnounce: {
-        accepted: 'Ваш термин, `%s`, принят!',
+        accepted: 'Ваш термин, `%s`, принят\\!',
         acceptedNotify: 'Успешно принято',
-        declined: 'Ваш термин, `%s`, отклонён. :(',
+        declined: 'Ваш термин, `%s`, отклонён\\. :(',
         declinedNotify: 'Успешно отклонено',
         synonym: 'Ваш термин, `%s`, отмечен как синоним к `%s`',
         synonymNotify: 'Успешно отмечено как синоним',
