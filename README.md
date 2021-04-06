@@ -4,6 +4,8 @@ A little educational project. Telegram bot that translate stranger Russian slang
 
 [![time tracker](https://wakatime.com/badge/github/ijo42/ObscureSlangTranslator.svg)](https://wakatime.com/badge/github/ijo42/ObscureSlangTranslator)
 
+Up-to-date information is available in [News Public](https://t.me/obscurenews)
+
 ## Stack:
 
 * Node.JS
