@@ -28,7 +28,7 @@ export const commands: Command[] = [
         regexp: regexpBuild('add', baseRegexp.lazyMatch),
         description: 'Command to suggest a new term',
         callback: (msg, match) => {
-            if (!match || !msg.from || (msg.chat.type == 'private' && msg.reply_to_message != undefined))
+            if (!match || !msg.from)
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = reformat(
@@ -184,7 +184,7 @@ If mistake, click \`Force\``, {
 export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
     callback: (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-        if (msg.from && msg.chat.type == 'private' && msg.text && !msg.text.startsWith('/')) {
+        if (msg.from && msg.chat.type == 'private' && msg.text && !msg.text.startsWith('/') && !msg.reply_to_message) {
             const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
