@@ -242,7 +242,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     }
                                 }).then(() => {
                                     editTerm(originEntry, (t => t.synonyms.push(match.term)));
-                                    bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.synonymNotify);
+                                    bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.synonymNotify, {reply_markup: {remove_keyboard: true}});
                                     bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
                                         parse_mode: "MarkdownV2"
                                     });
@@ -322,7 +322,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                             connect: {id: providedCategory.id}
                                         }
                                     }
-                                }).then(() => bot.sendMessage(chatId, "Successful linked"));
+                                }).then(() => bot.sendMessage(chatId, "Successful linked", {reply_markup: {remove_keyboard: true}}));
 
 
                         function processCategoryDefinition(categoryProvidedMsg: Message, listenId: number, providedTerm: ObscureEntry) {
