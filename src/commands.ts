@@ -8,11 +8,19 @@ import {
 } from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
-import { capitalize, formatAnswer, formatDBSize, formatUsername, reformat } from "./utils/formatting";
+import {
+    capitalize,
+    formatAnswer,
+    formatDBSize,
+    formatDuplicationCheck,
+    formatMention,
+    formatUsername,
+    formatUserPromotion,
+    reformat
+} from "./utils/formatting";
 import { eraseTerm, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
-import { format } from "util";
 import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
@@ -23,7 +31,7 @@ export const commands: Command[] = [
     {
         command: '/size',
         regexp: regexpBuild("size"),
-        description: 'Get last DB index',
+        description: texts.commandsAround.size.desk,
         callback: (msg => {
             const chatId = msg.chat.id;
             return prisma.obscure.count().then(num => bot.sendMessage(chatId, formatDBSize(num)));
@@ -33,7 +41,7 @@ export const commands: Command[] = [
     {
         command: '/add',
         regexp: regexpBuild('add', baseRegexp.lazyMatch),
-        description: 'Command to suggest a new term',
+        description: texts.commandsAround.add.desk,
         callback: (msg, match) => {
             if (!match || !msg.from)
                 return;
@@ -58,9 +66,7 @@ export const commands: Command[] = [
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, 'Force', msg.from.id);
-                return bot.sendMessage(chatId, `Are you sure that this is not a duplicate for
-*${formatAnswer(fuzzy)}*
-If mistake, click \`Force\``, {
+                return bot.sendMessage(chatId, formatDuplicationCheck(fuzzy), {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2"
                 }).then(answer => registerCallback(answer, keyboard));
@@ -78,7 +84,7 @@ If mistake, click \`Force\``, {
     {
         command: '/get',
         regexp: regexpBuild("get", baseRegexp.searchableExp),
-        description: 'Get Fuzzy Terms',
+        description: texts.commandsAround.get.desk,
         callback: (msg, match) =>
             bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
                 parse_mode: "MarkdownV2"
@@ -87,7 +93,7 @@ If mistake, click \`Force\``, {
     {
         command: '/promote',
         regexp: regexpBuild("promote"),
-        description: 'Promotes a user',
+        description: texts.commandsAround.promote.desk,
         callback: (msg) => {
             const promoterId = msg.from?.id;
             if (promoterId && hasRights(promoterId)) {
@@ -102,12 +108,12 @@ If mistake, click \`Force\``, {
                             bot.sendMessage(msg.chat.id, texts.successfulPromoting);
                             bot.sendMessage(promotable.id, texts.promoteAnnounce)
                                 .catch(() => bot.sendMessage(msg.chat.id,
-                                    `${promotable.username ? "@" : ""}${formatUsername(promotable)}, ` +
+                                    `${formatMention(promotable)}, ` +
                                     texts.promoteAnnounce));
 
                         }).catch(e => bot.sendMessage(promoterId, e.stack)), 'Promote', promoterId);
 
-                    return bot.sendMessage(msg.chat.id, format(texts.confirmPromotion, `${promotable.username ? "@" : ""}${formatUsername(promotable)}`), {
+                    return bot.sendMessage(msg.chat.id, formatUserPromotion(texts.confirmPromotion, promotable), {
                         reply_markup: keyboard
                     }).then(value => registerCallback(value, keyboard))
                 } else
@@ -119,7 +125,7 @@ If mistake, click \`Force\``, {
     },
     {
         command: '/moderate',
-        regexp: regexpBuild("moderate"), description: 'Moderate an staging entry',
+        regexp: regexpBuild("moderate"), description: texts.commandsAround.moderate.desk,
         callback: msg => {
             if (!msg.from || !hasRights(msg.from?.id))
                 return bot.sendMessage(msg.chat.id, texts.hasNoRights);
@@ -137,7 +143,7 @@ If mistake, click \`Force\``, {
                     }
                 }).then(res => {
                     if (!res) {
-                        bot.sendMessage(msg.chat.id, `No another staging`);
+                        bot.sendMessage(msg.chat.id, texts.noStaging);
                         return;
                     }
                     if (!msg.from)
@@ -164,7 +170,7 @@ If mistake, click \`Force\``, {
     },
     {
         regexp: regexpBuild("picture", baseRegexp.searchableExp), command: '/picture',
-        description: 'Get picture by term', callback: (msg, match) => {
+        description: texts.commandsAround.picture.desk, callback: (msg, match) => {
             let entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
@@ -177,7 +183,7 @@ If mistake, click \`Force\``, {
     },
     {
         regexp: regexpBuild("category"), command: '/category',
-        description: 'Category moderating command',
+        description: texts.commandsAround.category.desk,
         callback: (msg) => {
             if (msg.from && hasRights(msg.from.id)) {
                 const keyboard = categorizeMarkup(msg.chat.id, msg.from?.id)
@@ -189,7 +195,7 @@ If mistake, click \`Force\``, {
     },
     {
         regexp: regexpBuild("delete", baseRegexp.fullMatch), command: '/delete',
-        description: 'Force erasing term',
+        description: texts.commandsAround.delete.desk,
         callback: (msg, match) => {
             if (msg.from && hasRights(msg.from.id)) {
                 const obscureTerm = fuzzySearch(match);

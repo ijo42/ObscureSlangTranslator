@@ -1,17 +1,56 @@
 export const texts = {
-    dbSize: 'Currently, DB contains %s terms',
-    welcome: 'Welcome, available commands: /size, /add, /get',
-    hasNoRights: 'You have no rights. Contact to administrator',
-    provideAUser: 'You must provide an reply to promotable user',
-    confirmPromotion: 'Are you confident in user promotion %s',
-    promoteAnnounce: 'You are promoted to moderator',
-    successfulPromoting: 'Successful promoted',
-    unrecognizedSubCommand: 'Sub-Command couldn\'t recognized',
-    firstStart: 'That\'s a first start, to get moderator rights send command: `%s`',
+    dbSize: 'База данных содержит %s терминов',
+    welcome: 'Добро пожаловать!\nОзнакомиться подробнее можно в паблике https://t.me/obscurenews',
+    hasNoRights: 'У вас не хватает прав. Свяжитесь с администрацией',
+    provideAUser: 'Вы должны указать пользователя при помощи ответа на сообщение',
+    confirmPromotion: 'Вы уверены в повышении прав %s?',
+    promoteAnnounce: 'Вы повышены до модератора',
+    successfulPromoting: 'Повышение успешно',
+    firstStart: 'Это первый запуск, получите права модератора при помощи команды: `%s`',
     moderateAnnounce: {
-        accepted: 'Your term, `%s`, successful accepted',
-        declined: 'Your term, `%s`, declined',
-        synonym: 'Your term, `%s`, marked as synonym to `%s`',
-        request_changes: 'Moderator requested changes to your term, `%s`',
+        accepted: 'Ваш термин, `%s`, принят!',
+        acceptedNotify: 'Успешно принято',
+        declined: 'Ваш термин, `%s`, отклонён. :(',
+        declinedNotify: 'Успешно отклонено',
+        synonym: 'Ваш термин, `%s`, отмечен как синоним к `%s`',
+        synonymNotify: 'Успешно отмечено как синоним',
+        request_changes: 'Модератор потребовал изменений к вашему термину, `%s`',
+        requestNotify: 'Изменения успешно потребованы'
+    },
+    noStaging: 'Больше нет терминов для модерации',
+    duplicationCheck: 'Вы уверены, что это не дубликат для \n*%s*\nЕсли это не так, нажмите кнопку `Force`',
+    commandsAround: {
+        size: {
+            desk: 'Получить кол-во элементов базы данных'
+        },
+        add: {
+            desk: 'Команда для предложения нового термина'
+        },
+        moderate: {
+            desk: 'Модерировать ожидающие термины'
+        },
+        get: {
+            desk: 'Найти похожий термин в базе'
+        },
+        promote: {
+            desk: 'Повысить пользователя'
+        },
+        picture: {
+            desk: 'Получить иллюстрированный термин'
+        },
+        category: {
+            desk: 'Команда модерации категорий'
+        },
+        delete: {
+            desk: 'Удаление термина из базы данных'
+        }
+    },
+    requestFeedback: "Удачное ли это определение?",
+    requestIDKFeedback: "Должно ли появиться опредение дя этого слова?",
+    thx: "Спасибо!",
+    changePromise: "Спасибо! Мы постараемся изменить это",
+    binary: {
+        yes: "Да",
+        no: "Нет"
     }
 }

@@ -66,7 +66,7 @@ async function processCategory(msg: string, author: number): Promise<string> {
 }
 
 export function concreteTerm(item: ObscureEntry) {
-    return ` Term: ${item.term}
+    return `Term: ${item.term}
 Definition: ${item.value}
 Id: ${item.id}`
 }
@@ -153,7 +153,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     updated: new Date()
                                 }
                             }).then(() => {
-                                bot.sendMessage(match.reviewingChat, "Successful accepted");
+                                bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.acceptedNotify);
                                 bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                     parse_mode: "MarkdownV2"
                                 });
@@ -175,7 +175,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 updated: new Date()
                             }
                         }).then(() => {
-                            bot.sendMessage(match.reviewingChat, "Successful declined");
+                            bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.declinedNotify);
                             bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
@@ -198,7 +198,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 updated: new Date()
                             }
                         }).then(() => {
-                            bot.sendMessage(match.reviewingChat, "Successful requested");
+                            bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.requestNotify);
                             bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
@@ -242,7 +242,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     }
                                 }).then(() => {
                                     editTerm(originEntry, (t => t.synonyms.push(match.term)));
-                                    bot.sendMessage(match.reviewingChat, "Successful marked as Synonym");
+                                    bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.synonymNotify);
                                     bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
                                         parse_mode: "MarkdownV2"
                                     });

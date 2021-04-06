@@ -4,6 +4,7 @@ import { bot } from "../app";
 import { registerCallback } from "../inLineHandler";
 import prisma from "../db";
 import { formatUsername } from "./formatting";
+import { texts } from "../texts";
 
 
 export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested: boolean = false) {
@@ -26,7 +27,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
             inline_keyboard: [
                 [
                     {
-                        text: 'Yes!',
+                        text: `${texts.binary.yes}!`,
                         callback_data: 'Y',
                         callback: () =>
                             prisma.telemetry.update({
@@ -34,10 +35,10 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                                 data: {
                                     is_useful: true
                                 }
-                            }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"))
+                            }).then(() => bot.sendMessage(originalMsg.chat.id, texts.thx))
                     },
                     {
-                        text: 'No',
+                        text: texts.binary.no,
                         callback_data: 'N',
                         callback: () => prisma.telemetry.update({
                             where: e,
@@ -45,14 +46,14 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                                 is_useful: false,
                                 origin_message: originalMsg.text
                             }
-                        }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"))
+                        }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise))
                     }
                 ]
             ],
             restrictedTo: originalMsg.from.id
         }
 
-        bot.sendMessage(originalMsg.chat.id, "Was this helpful?",
+        bot.sendMessage(originalMsg.chat.id, texts.requestFeedback,
             {
                 reply_markup: markup
             }).then(r => registerCallback(r, markup));
@@ -67,7 +68,7 @@ export function requestIDKFeedback(originalMsg: Message) {
         inline_keyboard: [
             [
                 {
-                    text: 'Yes',
+                    text: texts.binary.yes,
                     callback_data: 'Y',
                     callback: () => {
                         if (originalMsg.from)
@@ -77,21 +78,21 @@ export function requestIDKFeedback(originalMsg: Message) {
                                     author: formatUsername(originalMsg.from),
                                     origin_message: originalMsg.text
                                 }
-                            }).then(() => bot.sendMessage(originalMsg.chat.id, "Thanks!"));
+                            }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));
                         return Promise.resolve();
                     }
                 },
                 {
-                    text: 'No',
+                    text: texts.binary.no,
                     callback_data: 'N',
-                    callback: () => Promise.resolve()
+                    callback: () => bot.sendMessage(originalMsg.chat.id, texts.thx)
                 }
             ]
         ],
         restrictedTo: originalMsg.from.id
     }
 
-    bot.sendMessage(originalMsg.chat.id, "Should I report this?",
+    bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback,
         {
             reply_markup: markup
         }).then(r => registerCallback(r, markup));

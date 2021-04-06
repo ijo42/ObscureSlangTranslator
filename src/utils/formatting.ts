@@ -1,10 +1,9 @@
-import { User } from "node-telegram-bot-api";
 import * as util from "util";
 import { ObscureEntry } from "../templates";
 import { texts } from "../texts";
 import { randomBytes } from "crypto";
 
-export const formatUsername = (user: User) => {
+export const formatUsername = (user: { id: number, username?: string, first_name?: string, last_name?: string }) => {
     return util.format(`%s <${user.id}>`, user.username ||
         `${user.first_name} ${user.last_name || '-'}`);
 };
@@ -29,6 +28,16 @@ export const grabUsrID: (s: string) => string = (s: string) =>
 
 export const formatDBSize = (s: string | number) =>
     util.format(texts.dbSize, s.toString());
+
+export const formatDuplicationCheck = (entry: ObscureEntry) =>
+    util.format(texts.duplicationCheck, formatAnswer(entry))
+
+export function formatMention(promotable: { id: number; username?: string; first_name?: string; last_name?: string }) {
+    return promotable.username ? "@" : "" + formatUsername(promotable);
+}
+
+export const formatUserPromotion = (text: string, promotable: { id: number, username?: string, first_name?: string, last_name?: string }) =>
+    util.format(text, formatMention(promotable))
 
 export const reformatStr = (s: string) =>
     s.replace("_", " ")
