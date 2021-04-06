@@ -60,8 +60,8 @@ export const commands: Command[] = [
             };
             const upload = () =>
                 processReplenishment(entry, msg.from ? formatUsername(msg.from) : '')
-                    .then(acceptedAs =>
-                        bot.sendMessage(msg.chat.id, formatDBSize(acceptedAs)))
+                    .then(() =>
+                        bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
                     .catch(e => bot.sendMessage(msg.chat.id, e))
 
             if (fuzzy) {

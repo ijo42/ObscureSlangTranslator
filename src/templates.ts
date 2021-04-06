@@ -71,7 +71,7 @@ Definition: ${item.value}
 Id: ${item.id}`
 }
 
-export async function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<number> {
+export async function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<ObscureEntry> {
     if (staging)
         await prisma.staging.create({
             data: {
@@ -99,7 +99,7 @@ export async function processReplenishment(entry: ObscureEntry, author: string, 
             entry.id = val.id;
             pushTerm(entry)
         });
-    return entry.id;
+    return entry;
 }
 
 export function keyboardWithConfirmation(onForce: () => void, text: string, restrictedTo: number | boolean = false): Keyboard {
@@ -149,7 +149,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 data: {
                                     status: 'accepted',
                                     reviewed_by: match.reviewer,
-                                    accepted_as: acceptedAs,
+                                    accepted_as: acceptedAs.id,
                                     updated: new Date()
                                 }
                             }).then(() => {

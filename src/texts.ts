@@ -52,5 +52,6 @@ export const texts = {
     binary: {
         yes: "Да",
         no: "Нет"
-    }
+    },
+    reviewPromise: "Мы рассмотрим его в ближайшее время!"
 }
