@@ -1,8 +1,15 @@
-import { categorizeMarkup, Command, keyboardWithConfirmation, moderateMarkup, processReplenishment } from "./templates";
+import {
+    categorizeMarkup,
+    Command,
+    concreteTerm,
+    keyboardWithConfirmation,
+    moderateMarkup,
+    processReplenishment
+} from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
 import { capitalize, formatAnswer, formatDBSize, formatUsername, reformat } from "./utils/formatting";
-import { fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
+import { eraseTerm, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
 import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import { format } from "util";
@@ -177,6 +184,31 @@ If mistake, click \`Force\``, {
                 bot.sendMessage(msg.chat.id, 'Choose an action', {
                     reply_markup: keyboard
                 }).then(r => registerCallback(r, keyboard));
+            }
+        }
+    },
+    {
+        regexp: regexpBuild("delete", baseRegexp.fullMatch), command: '/delete',
+        description: 'Force erasing term',
+        callback: (msg, match) => {
+            if (msg.from && hasRights(msg.from.id)) {
+                const obscureTerm = fuzzySearch(match);
+                if (!obscureTerm) {
+                    bot.sendMessage(msg.chat.id, 'Not found');
+                    return;
+                }
+                const confirm = keyboardWithConfirmation(() => {
+                    console.log(`Deleted term ${JSON.stringify(obscureTerm)}`)
+                    prisma.obscure.delete({
+                        where: {
+                            id: obscureTerm.id
+                        }
+                    }).then(() => eraseTerm(obscureTerm))
+                        .then(() => bot.sendMessage(msg.chat.id, 'Successful'));
+                }, 'Force', msg.from.id);
+                bot.sendMessage(msg.chat.id, concreteTerm(obscureTerm), {
+                    reply_markup: confirm
+                }).then(r => registerCallback(r, confirm));
             }
         }
     }

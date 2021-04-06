@@ -54,6 +54,10 @@ export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => voi
     fuse.add(term);
 }
 
+export function eraseTerm(term: ObscureEntry) {
+    fuse.remove((doc: ObscureEntry) => term == doc);
+}
+
 export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => {
     return query ? fuse.search(query.join(' | ')).slice(0, num).map(value => value.item) : [];
 }

@@ -65,6 +65,12 @@ async function processCategory(msg: string, author: number): Promise<string> {
     }).then(r => r.value);
 }
 
+export function concreteTerm(item: ObscureEntry) {
+    return ` Term: ${item.term}
+Definition: ${item.value}
+Id: ${item.id}`
+}
+
 export async function processReplenishment(entry: ObscureEntry, author: string, staging: boolean = true): Promise<number> {
     if (staging)
         await prisma.staging.create({
