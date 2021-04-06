@@ -215,7 +215,7 @@ export const commands: Command[] = [
                 bot.sendMessage(msg.chat.id, concreteTerm(obscureTerm), {
                     reply_markup: confirm
                 }).then(r => registerCallback(r, confirm));
-            }
+            } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     }
 ];
