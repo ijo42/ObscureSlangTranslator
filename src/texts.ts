@@ -10,7 +10,7 @@ export const texts = {
     moderateAnnounce: {
         accepted: 'Ваш термин, `%s`, принят\\!',
         acceptedNotify: 'Успешно принято',
-        declined: 'Ваш термин, `%s`, отклонён\\. :(',
+        declined: 'Ваш термин, `%s`, отклонён\\ :\\(',
         declinedNotify: 'Успешно отклонено',
         synonym: 'Ваш термин, `%s`, отмечен как синоним к `%s`',
         synonymNotify: 'Успешно отмечено как синоним',
