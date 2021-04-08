@@ -1,10 +1,12 @@
 import {
     categorizeMarkup,
+    collectTelemetry,
     Command,
     concreteTerm,
     keyboardWithConfirmation,
     moderateMarkup,
-    processReplenishment
+    processReplenishment,
+    telemetryMarkup
 } from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
@@ -14,6 +16,7 @@ import {
     formatDBSize,
     formatDuplicationCheck,
     formatMention,
+    formatTelemetry,
     formatUsername,
     formatUserPromotion,
     reformat
@@ -23,7 +26,7 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
-import { sendPic } from "./utils/drawing";
+import { sendPic, sendWelcome } from "./utils/drawing";
 import TelegramBot from "node-telegram-bot-api";
 import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
 
@@ -79,7 +82,7 @@ export const commands: Command[] = [
         command: '/start',
         regexp: regexpBuild("start"),
         description: 'Welcome-Command',
-        callback: (msg) => bot.sendMessage(msg.chat.id, texts.welcome)
+        callback: (msg) => sendWelcome(msg.chat.id, texts.welcome)
     },
     {
         command: '/get',
@@ -215,6 +218,24 @@ export const commands: Command[] = [
                 bot.sendMessage(msg.chat.id, concreteTerm(obscureTerm), {
                     reply_markup: confirm
                 }).then(r => registerCallback(r, confirm));
+            } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
+        }
+    },
+    {
+        regexp: regexpBuild("telemetry"), command: '/telemetry', description: "Telemetry moderation",
+        callback: msg => {
+            if (msg.from && hasRights(msg.from.id)) {
+                collectTelemetry().then(entry => {
+                    if (msg.from && entry) {
+                        const replyMarkup = telemetryMarkup(msg, msg.from.id);
+                        bot.sendMessage(msg.chat.id, formatTelemetry(entry), {
+                            reply_markup: replyMarkup
+                        }).then(e => {
+                            registerCallback(e, replyMarkup)
+                        });
+                    } else
+                        bot.sendMessage(msg.chat.id, texts.telemetryModerate.noWaiting);
+                });
             } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     }

@@ -53,5 +53,13 @@ export const texts = {
         yes: "Да",
         no: "Нет"
     },
-    reviewPromise: "Мы рассмотрим его в ближайшее время!"
+    reviewPromise: "Мы рассмотрим его в ближайшее время!",
+    telemetryModerate: {
+        helpful: "Полезно ли",
+        originMsg: "Оригинальное сообщение",
+        botAnswer: "Ответ бота",
+        noWaiting: "Больше нет ожидающих",
+        resolved: "Разрешено",
+    },
+    success: "Успешно",
 }

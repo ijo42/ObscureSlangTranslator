@@ -15,12 +15,13 @@ import {
     fuzzySearchWithLen,
     pushTerm
 } from "./utils/fuzzySearch";
-import { formatAnswer, formatAnswerUnpreceded, grabUsrID, reformatStr } from "./utils/formatting";
+import { formatAnswer, formatAnswerUnpreceded, formatTelemetry, grabUsrID, reformatStr } from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
 import { hasRights } from "./utils/moderate";
 import { compiledRegexp } from "./utils/regexpBuilder";
+import { registerCallback } from "./inLineHandler";
 
 export interface Command extends BotCommand {
     regexp: RegExp;
@@ -373,6 +374,88 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                         }
 
                         return genObscureKeyboard().then(obscureKeyboard => requestTerm(obscureKeyboard));
+                    }
+                }
+            ]
+        ],
+        restrictedTo: restrictedTo
+    }
+}
+
+export const collectTelemetry = (uID: number | null = null) => {
+    if (uID)
+        return prisma.telemetry.findFirst({
+            where: {
+                moderated_by: null,
+                NOT: {
+                    is_useful: null
+                }
+            },
+            select: {
+                id: true,
+                is_useful: true,
+                origin_message: true,
+                obscure: true
+            },
+            skip: 1,
+            cursor: {
+                id: uID
+            }
+        });
+    return prisma.telemetry.findFirst({
+        where: {
+            moderated_by: null,
+            NOT: {
+                is_useful: null
+            }
+        },
+        select: {
+            id: true,
+            is_useful: true,
+            origin_message: true,
+            obscure: true
+        },
+    });
+};
+
+export function telemetryMarkup(message: Message, restrictedTo: number): Keyboard {
+    return {
+        inline_keyboard: [
+            [
+                {
+                    text: '➡️',
+                    callback_data: 'F',
+                    callback: (query) => {
+                        if (!(query.message && query.message.text))
+                            return Promise.reject();
+                        return collectTelemetry(Number(grabUsrID(query.message.text))).then(entry => {
+                            if (entry && query.message && message.from) {
+                                const replyMarkup = telemetryMarkup(message, message.from.id);
+                                bot.editMessageText(formatTelemetry(entry), {
+                                    chat_id: query.message.chat.id,
+                                    message_id: query.message?.message_id,
+                                    reply_markup: replyMarkup,
+                                }).then(e => registerCallback(<Message>e, replyMarkup));
+                            } else
+                                bot.sendMessage(message.chat.id, texts.telemetryModerate.noWaiting)
+                        })
+                    }
+                },
+                {
+                    text: texts.telemetryModerate.resolved,
+                    callback_data: 'R',
+                    callback: (query) => {
+                        if (!(query.message && query.message.text))
+                            return Promise.reject();
+                        return prisma.telemetry.update({
+                            where: {
+                                id: Number(grabUsrID(query.message.text))
+                            },
+                            data: {
+                                moderated_by: restrictedTo,
+                                moderated_at: new Date()
+                            }
+                        }).then(() => bot.sendMessage(message.chat.id, texts.success));
                     }
                 }
             ]
