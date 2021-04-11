@@ -1,10 +1,12 @@
 import {
     BotCommand,
     CallbackQuery,
+    Chat,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
     ReplyKeyboardMarkup,
+    User,
 } from "node-telegram-bot-api";
 import { bot } from "./app";
 import {
@@ -46,7 +48,7 @@ export interface ModerateAction extends ObscureEntry {
 }
 
 interface KeyboardButton extends InlineKeyboardButton {
-    callback: (query: CallbackQuery) => Promise<any>;
+    callback: (query: CallbackQuery) => Promise<any> | any;
 }
 
 export interface Keyboard extends InlineKeyboardMarkup {
@@ -387,9 +389,7 @@ export const collectTelemetry = (uID: number | null = null) => {
         return prisma.telemetry.findFirst({
             where: {
                 moderated_by: null,
-                NOT: {
-                    is_useful: null
-                }
+                is_useful: false
             },
             select: {
                 id: true,
@@ -405,9 +405,7 @@ export const collectTelemetry = (uID: number | null = null) => {
     return prisma.telemetry.findFirst({
         where: {
             moderated_by: null,
-            NOT: {
-                is_useful: null
-            }
+            is_useful: false
         },
         select: {
             id: true,
@@ -418,7 +416,21 @@ export const collectTelemetry = (uID: number | null = null) => {
     });
 };
 
-export function telemetryMarkup(message: Message, restrictedTo: number): Keyboard {
+export function telemetryMarkup(message: Message, restrictedTo: number, reset: boolean = false): Keyboard {
+    function forward(query: { message: { from?: User, text: string, chat: Chat, message_id: number } }) {
+        collectTelemetry(reset ? null : Number(grabUsrID(query.message.text))).then(entry => {
+            if (query.message && message.from) {
+                const replyMarkup = telemetryMarkup(message, message.from.id, !entry);
+                bot.editMessageText(entry ? formatTelemetry(entry) : texts.telemetryModerate.noWaiting, {
+                    chat_id: query.message.chat.id,
+                    message_id: query.message.message_id,
+                    reply_markup: replyMarkup,
+                }).then(e => registerCallback(<Message>e, replyMarkup));
+            } else
+                bot.sendMessage(message.chat.id, texts.telemetryModerate.noWaiting)
+        });
+    }
+
     return {
         inline_keyboard: [
             [
@@ -426,36 +438,42 @@ export function telemetryMarkup(message: Message, restrictedTo: number): Keyboar
                     text: '➡️',
                     callback_data: 'F',
                     callback: (query) => {
-                        if (!(query.message && query.message.text))
-                            return Promise.reject();
-                        return collectTelemetry(Number(grabUsrID(query.message.text))).then(entry => {
-                            if (entry && query.message && message.from) {
-                                const replyMarkup = telemetryMarkup(message, message.from.id);
-                                bot.editMessageText(formatTelemetry(entry), {
-                                    chat_id: query.message.chat.id,
-                                    message_id: query.message?.message_id,
-                                    reply_markup: replyMarkup,
-                                }).then(e => registerCallback(<Message>e, replyMarkup));
-                            } else
-                                bot.sendMessage(message.chat.id, texts.telemetryModerate.noWaiting)
-                        })
+                        if (query.message && query.message.text) {
+                            forward({
+                                message: {
+                                    from: query.message.from,
+                                    text: query.message.text,
+                                    chat: query.message.chat,
+                                    message_id: query.message.message_id
+                                }
+                            });
+                        }
                     }
                 },
                 {
                     text: texts.telemetryModerate.resolved,
                     callback_data: 'R',
                     callback: (query) => {
-                        if (!(query.message && query.message.text))
-                            return Promise.reject();
-                        return prisma.telemetry.update({
-                            where: {
-                                id: Number(grabUsrID(query.message.text))
-                            },
-                            data: {
-                                moderated_by: restrictedTo,
-                                moderated_at: new Date()
-                            }
-                        }).then(() => bot.sendMessage(message.chat.id, texts.success));
+                        let id;
+                        if (query.message && query.message.text && 0 !== (id = Number(grabUsrID(query.message.text)))) {
+                            forward({
+                                message: {
+                                    from: query.message.from,
+                                    text: query.message.text,
+                                    chat: query.message.chat,
+                                    message_id: query.message.message_id
+                                }
+                            });
+                            prisma.telemetry.update({
+                                where: {
+                                    id: id
+                                },
+                                data: {
+                                    moderated_by: restrictedTo,
+                                    moderated_at: new Date()
+                                }
+                            }).then(() => bot.sendMessage(message.chat.id, texts.success));
+                        }
                     }
                 }
             ]

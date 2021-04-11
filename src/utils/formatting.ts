@@ -23,8 +23,11 @@ export const capitalize: ([...st]: readonly any[]) => any = ([...st]) =>
 export const precedeChar: (s: string) => string = (s: string) =>
     s.replace(/([_\]\[)(~>#+\-=|}{.!])/gm, `\\$1`);
 
-export const grabUsrID: (s: string) => string = (s: string) =>
-    s.slice(s.lastIndexOf('<') + 1, s.lastIndexOf('>'));
+export const grabUsrID: (s: string) => string = (s: string) => {
+    if (!s.includes('<') || !s.includes('>'))
+        return "";
+    return s.slice(s.lastIndexOf('<') + 1, s.lastIndexOf('>'));
+};
 
 export const formatDBSize = (s: string | number) =>
     util.format(texts.dbSize, s.toString());

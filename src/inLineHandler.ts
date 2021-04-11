@@ -33,7 +33,7 @@ export const processQuery = (query: CallbackQuery) => {
                     .then(() =>
                         registeredCallbacks.delete((<Message>query.message).message_id))
                     .then(() => bot.answerCallbackQuery(query.id))
-                    .catch(e => bot.sendMessage(query.from.id, e.stack));
+                    .catch((e: { stack: string; }) => bot.sendMessage(query.from.id, e.stack));
     }
 }
 

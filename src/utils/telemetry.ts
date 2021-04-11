@@ -72,14 +72,13 @@ export function requestIDKFeedback(originalMsg: Message) {
                     callback_data: 'Y',
                     callback: () => {
                         if (originalMsg.from)
-                            return prisma.telemetry.create({
+                            prisma.telemetry.create({
                                 data: {
                                     is_useful: false,
                                     author: formatUsername(originalMsg.from),
                                     origin_message: originalMsg.text
                                 }
                             }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));
-                        return Promise.resolve();
                     }
                 },
                 {
