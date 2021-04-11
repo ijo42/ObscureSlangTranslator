@@ -16,6 +16,7 @@ import {
     formatDBSize,
     formatDuplicationCheck,
     formatMention,
+    formatStatus,
     formatTelemetry,
     formatUsername,
     formatUserPromotion,
@@ -26,7 +27,7 @@ import { registerCallback } from "./inLineHandler";
 import { hasRights, promoteUser } from "./utils/moderate";
 import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
-import { sendPic, sendWelcome } from "./utils/drawing";
+import { sendPic } from "./utils/drawing";
 import TelegramBot from "node-telegram-bot-api";
 import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
 
@@ -82,7 +83,7 @@ export const commands: Command[] = [
         command: '/start',
         regexp: regexpBuild("start"),
         description: 'Welcome-Command',
-        callback: (msg) => sendWelcome(msg.chat.id, texts.welcome)
+        callback: (msg) => bot.sendMessage(msg.chat.id, texts.welcome)
     },
     {
         command: '/get',
@@ -222,7 +223,7 @@ export const commands: Command[] = [
         }
     },
     {
-        regexp: regexpBuild("telemetry"), command: '/telemetry', description: "Telemetry moderation",
+        regexp: regexpBuild("telemetry"), command: '/telemetry', description: texts.commandsAround.telemetry.desk,
         callback: msg => {
             if (msg.from && hasRights(msg.from.id)) {
                 collectTelemetry().then(entry => {
@@ -237,6 +238,25 @@ export const commands: Command[] = [
                         bot.sendMessage(msg.chat.id, texts.telemetryModerate.noWaiting);
                 });
             } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
+        }
+    },
+    {
+        regexp: regexpBuild("status"), command: '/status', description: texts.commandsAround.status.desk,
+        callback: msg => {
+            if (msg.from && hasRights(msg.from.id))
+                prisma.telemetry.count({
+                    where: {
+                        moderated_by: null,
+                        is_useful: false,
+                    }
+                }).then(telemetry =>
+                    prisma.staging.count({
+                        where: {
+                            status: 'waiting'
+                        }
+                    }).then(staging =>
+                        bot.sendMessage(msg.chat.id, formatStatus(telemetry, staging))))
+            else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     }
 ];

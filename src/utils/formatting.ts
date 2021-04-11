@@ -38,6 +38,12 @@ export const formatMention = (promotable: { id: number; username?: string; first
 export const formatUserPromotion = (text: string, promotable: { id: number, username?: string, first_name?: string, last_name?: string }) =>
     util.format(text, formatMention(promotable))
 
+export const formatStatus = (telemetryEntry: number, staging: number) => {
+    return `${texts.commandsAround.status.desk}:
+${texts.awaitedModerating}: ${staging} ${texts.terms}
+${texts.awaitedModerating}: ${telemetryEntry} ${texts.telemetry}`;
+}
+
 export const formatTelemetry = (entry: { obscure: ObscureEntry | null; id: number; is_useful: boolean | null; origin_message: string | null; }) => {
     return `ID: <${entry.id}>
 ${texts.telemetryModerate.helpful}: ${entry.is_useful}

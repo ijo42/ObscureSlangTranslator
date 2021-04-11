@@ -43,7 +43,13 @@ export const texts = {
         },
         delete: {
             desk: 'Удаление термина из базы данных'
-        }
+        },
+        telemetry: {
+            desk: 'Модерация телеметрии'
+        },
+        status: {
+            desk: 'Текущее состояние'
+        },
     },
     requestFeedback: "Удачное ли это определение?",
     requestIDKFeedback: "Должно ли появиться опредение дя этого слова?",
@@ -61,5 +67,8 @@ export const texts = {
         noWaiting: "Больше нет ожидающих",
         resolved: "Разрешено",
     },
+    awaitedModerating: "Ожидает модерации",
     success: "Успешно",
+    terms: "терминов",
+    telemetry: "вхождений телеметрии"
 }
