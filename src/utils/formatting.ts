@@ -56,8 +56,8 @@ ${texts.telemetryModerate.botAnswer}: ${entry.obscure?.term}`;
 
 export const reformatStr = (s: string) =>
     s.replace("_", " ")
-        .replace(/ {2,}/g, ` `)
-        .replace(/([.,!?] )(a-zA-Zа-яА-Я])/g, `$1 $2`);
+        .replace(/ {2,}/g, " ")
+        .replace(/([.,!?])([a-zA-Zа-яА-Я])/g, "$1 $2");
 
 export const reformat: ([...st]: readonly any[]) => any = ([...st]) =>
     st.map(str => reformatStr(str));
