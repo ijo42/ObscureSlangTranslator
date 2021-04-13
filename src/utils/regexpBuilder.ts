@@ -1,4 +1,4 @@
-export default function build(command: string, args: string | undefined = undefined) {
+export default function build(command: string, args: string | undefined = undefined): RegExp {
     if (!args)
         return new RegExp(`^/${command}(?:${baseRegexp.botMention})?$`);
     return new RegExp(`^/${command}(?:${baseRegexp.botMention})? ${args}$`);

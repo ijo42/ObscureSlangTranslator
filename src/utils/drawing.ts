@@ -9,14 +9,14 @@ let titleFont!: Font;
 let bodyFont!: Font;
 let additionalFont!: Font;
 
-export default async function setup() {
+export default async function setup(): Promise<void> {
     Jimp.create("resources/template.png").then(x => template = x);
     Jimp.loadFont("resources/title.fnt").then(x => titleFont = x);
     Jimp.loadFont("resources/body.fnt").then(x => bodyFont = x);
     Jimp.loadFont("resources/additional.fnt").then(x => additionalFont = x);
 }
 
-export function sendPic(id: number | string, entry: ObscureEntry) {
+export function sendPic(id: number | string, entry: ObscureEntry): void {
     Jimp.create(template).then(image => {
         image.print(titleFont, 0, image.getHeight() / 10, {
             text: entry.term,

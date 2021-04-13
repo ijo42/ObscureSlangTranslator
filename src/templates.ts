@@ -48,7 +48,7 @@ export interface ModerateAction extends ObscureEntry {
 }
 
 interface KeyboardButton extends InlineKeyboardButton {
-    callback: (query: CallbackQuery) => Promise<any> | any;
+    callback: (query: CallbackQuery) => void;
 }
 
 export interface Keyboard extends InlineKeyboardMarkup {
@@ -60,7 +60,7 @@ async function processCategory(msg: string, author: number): Promise<string> {
     return await prisma.categories.create({
         data: {
             value: reformatStr(msg),
-            author: author
+            author
         },
         select: {
             value: true
@@ -68,7 +68,7 @@ async function processCategory(msg: string, author: number): Promise<string> {
     }).then(r => r.value);
 }
 
-export function concreteTerm(item: ObscureEntry) {
+export function concreteTerm(item: ObscureEntry): string {
     return `Term: ${item.term}
 Definition: ${item.value}
 Id: ${item.id}`;
@@ -80,7 +80,7 @@ export async function processReplenishment(entry: ObscureEntry, author: string, 
             data: {
                 term: entry.term,
                 value: entry.value,
-                author: author
+                author
             },
             select: {
                 id: true
@@ -93,7 +93,7 @@ export async function processReplenishment(entry: ObscureEntry, author: string, 
             data: {
                 term: entry.term,
                 value: entry.value,
-                author: author
+                author
             },
             select: {
                 id: true
@@ -109,11 +109,11 @@ export function keyboardWithConfirmation(onForce: () => void, text: string, rest
     return {
         inline_keyboard: [
             [{
-                text: text, callback_data: "F",
-                callback: () => Promise.resolve(onForce())
+                text, callback_data: "F",
+                callback: () => onForce()
             }]
         ],
-        restrictedTo: restrictedTo
+        restrictedTo
     };
 
 }
@@ -143,7 +143,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                 {
                     text: "ACCEPT",
                     callback_data: "A",
-                    callback: () => {
+                    callback() {
                         return processReplenishment(match, match.author, false).then((acceptedAs) =>
                             prisma.staging.update({
                                 where: {
@@ -160,15 +160,15 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                     parse_mode: "MarkdownV2"
                                 });
-                            }).catch((e: any) =>
+                            }).catch(e =>
                                 bot.sendMessage(match.reviewer, e.stack)));
                     }
                 },
                 {
                     text: "DECLINE",
                     callback_data: "D",
-                    callback: () =>
-                        prisma.staging.update({
+                    callback() {
+                        return prisma.staging.update({
                             where: {
                                 id: match.stagingId
                             },
@@ -182,16 +182,17 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
-                        }).catch((e: any) =>
-                            bot.sendMessage(match.reviewer, e.stack))
+                        }).catch(e =>
+                            bot.sendMessage(match.reviewer, e.stack));
+                    }
                 }
             ],
             [
                 {
                     text: "REQUEST CHANGES",
                     callback_data: "R",
-                    callback: () =>
-                        prisma.staging.update({
+                    callback() {
+                        return prisma.staging.update({
                             where: {
                                 id: match.stagingId
                             },
@@ -205,13 +206,14 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2"
                             });
-                        }).catch((e: any) =>
-                            bot.sendMessage(match.reviewer, e.stack))
+                        }).catch(e =>
+                            bot.sendMessage(match.reviewer, e.stack));
+                    }
                 },
                 {
                     text: "SYNONYM",
                     callback_data: "S",
-                    callback: () => {
+                    callback() {
                         function generateSynonymMarkup(entry: { term: string; value: string; }): ReplyKeyboardMarkup {
                             const matchedEnters: ReadonlyArray<string> = fuzzySearchWithLen(
                                 [entry.term, entry.value], 3)
@@ -271,7 +273,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                 }
             ]
         ],
-        restrictedTo: restrictedTo
+        restrictedTo
     };
 }
 
@@ -282,8 +284,8 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                 {
                     text: "Create new",
                     callback_data: "CREATE",
-                    callback: () =>
-                        bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
+                    callback() {
+                        return bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
                             const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
                                 if (msg.from && hasRights(msg.from.id) && msg.text && compiledRegexp.categoryDef.test(msg.text)) {
                                     processCategory(msg.text, msg.from.id).then(ret =>
@@ -292,12 +294,13 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                 } else
                                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
                             });
-                        })
+                        });
+                    }
                 },
                 {
                     text: "Assign",
                     callback_data: "ASSIGN",
-                    callback: () => {
+                    callback() {
                         const genCategoryKeyboard = () =>
                                 prisma.categories.findMany({
                                     select: {
@@ -368,10 +371,10 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             return bot.sendMessage(chatId, "Reply to this message w/ term. May provide over in-line", {
                                 reply_markup: obscureKeyboard
                             }).then(termProvideMsg => {
-                                    const listenId = bot.onReplyToMessage(chatId, termProvideMsg.message_id, termProvidedMsg => {
-                                        return processTermDefinition(termProvidedMsg, listenId);
-                                    });
-                                }
+                                const listenId = bot.onReplyToMessage(chatId, termProvideMsg.message_id, termProvidedMsg => {
+                                    return processTermDefinition(termProvidedMsg, listenId);
+                                });
+                            }
                             );
                         }
 
@@ -380,7 +383,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                 }
             ]
         ],
-        restrictedTo: restrictedTo
+        restrictedTo
     };
 }
 
@@ -466,7 +469,7 @@ export function telemetryMarkup(message: Message, restrictedTo: number, reset = 
                             });
                             prisma.telemetry.update({
                                 where: {
-                                    id: id
+                                    id
                                 },
                                 data: {
                                     moderated_by: restrictedTo,
@@ -478,6 +481,6 @@ export function telemetryMarkup(message: Message, restrictedTo: number, reset = 
                 }
             ]
         ],
-        restrictedTo: restrictedTo
+        restrictedTo
     };
 }

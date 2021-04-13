@@ -22,7 +22,7 @@ function firstStart() {
     }
 }
 
-export default async function setup() {
+export default async function setup(): Promise<void> {
     await prisma.moderators.findMany({
         select: {
             "id": true,
@@ -36,8 +36,8 @@ export function hasRights(userId: number | undefined): number | undefined {
     return !userId ? undefined : moderators.get(userId);
 }
 
-export function promoteUser(promotable: number, promoter: number) {
-    return prisma.moderators.create({
+export const promoteUser: (promotable: number, promoter: number) => Promise<unknown> = (promotable: number, promoter: number) =>
+    prisma.moderators.create({
         data: {
             promoted_by: promoter,
             user_id: promotable
@@ -47,4 +47,3 @@ export function promoteUser(promotable: number, promoter: number) {
             "user_id": true
         }
     }).then(usr => moderators.set(usr.user_id, usr.id));
-}
