@@ -33,7 +33,7 @@ import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
 
 export const commands: Command[] = [
     {
-        command: '/size',
+        command: "/size",
         regexp: regexpBuild("size"),
         description: texts.commandsAround.size.desk,
         callback: (msg => {
@@ -43,8 +43,8 @@ export const commands: Command[] = [
     },
 
     {
-        command: '/add',
-        regexp: regexpBuild('add', baseRegexp.lazyMatch),
+        command: "/add",
+        regexp: regexpBuild("add", baseRegexp.lazyMatch),
         description: texts.commandsAround.add.desk,
         callback: (msg, match) => {
             if (!match || !msg.from)
@@ -63,13 +63,13 @@ export const commands: Command[] = [
                 value: vars[1]
             };
             const upload = () =>
-                processReplenishment(entry, msg.from ? formatUsername(msg.from) : '')
+                processReplenishment(entry, msg.from ? formatUsername(msg.from) : "")
                     .then(() =>
                         bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
-                    .catch(e => bot.sendMessage(msg.chat.id, e))
+                    .catch(e => bot.sendMessage(msg.chat.id, e));
 
             if (fuzzy) {
-                const keyboard = keyboardWithConfirmation(upload, 'Force', msg.from.id);
+                const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
                 return bot.sendMessage(chatId, formatDuplicationCheck(fuzzy), {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2"
@@ -80,13 +80,13 @@ export const commands: Command[] = [
     },
 
     {
-        command: '/start',
+        command: "/start",
         regexp: regexpBuild("start"),
-        description: 'Welcome-Command',
+        description: "Welcome-Command",
         callback: (msg) => bot.sendMessage(msg.chat.id, texts.welcome)
     },
     {
-        command: '/get',
+        command: "/get",
         regexp: regexpBuild("get", baseRegexp.searchableExp),
         description: texts.commandsAround.get.desk,
         callback: (msg, match) =>
@@ -95,7 +95,7 @@ export const commands: Command[] = [
             })
     },
     {
-        command: '/promote',
+        command: "/promote",
         regexp: regexpBuild("promote"),
         description: texts.commandsAround.promote.desk,
         callback: (msg) => {
@@ -106,7 +106,7 @@ export const commands: Command[] = [
                     const keyboard = keyboardWithConfirmation(() =>
                         promoteUser(promotable.id, promoterId).then(() => {
                             if (hasRights(promotable.id)) {
-                                bot.sendMessage(msg.chat.id, "Already has rights")
+                                bot.sendMessage(msg.chat.id, "Already has rights");
                                 return;
                             }
                             bot.sendMessage(msg.chat.id, texts.successfulPromoting);
@@ -115,20 +115,20 @@ export const commands: Command[] = [
                                     `${formatMention(promotable)}, ` +
                                     texts.promoteAnnounce));
 
-                        }).catch(e => bot.sendMessage(promoterId, e.stack)), 'Promote', promoterId);
+                        }).catch(e => bot.sendMessage(promoterId, e.stack)), "Promote", promoterId);
 
                     return bot.sendMessage(msg.chat.id, formatUserPromotion(texts.confirmPromotion, promotable), {
                         reply_markup: keyboard
-                    }).then(value => registerCallback(value, keyboard))
+                    }).then(value => registerCallback(value, keyboard));
                 } else
                     return bot.sendMessage(msg.chat.id, texts.provideAUser, {
                         parse_mode: "MarkdownV2"
-                    })
+                    });
             } else return bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     },
     {
-        command: '/moderate',
+        command: "/moderate",
         regexp: regexpBuild("moderate"), description: texts.commandsAround.moderate.desk,
         callback: msg => {
             if (!msg.from || !hasRights(msg.from?.id))
@@ -137,7 +137,7 @@ export const commands: Command[] = [
                 return prisma.staging.findFirst({
                     take: 1,
                     where: {
-                        status: 'waiting'
+                        status: "waiting"
                     },
                     select: {
                         "id": true,
@@ -173,49 +173,49 @@ export const commands: Command[] = [
         }
     },
     {
-        regexp: regexpBuild("picture", baseRegexp.searchableExp), command: '/picture',
+        regexp: regexpBuild("picture", baseRegexp.searchableExp), command: "/picture",
         description: texts.commandsAround.picture.desk, callback: (msg, match) => {
-            let entry = fuzzySearch(match);
+            const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
                 requestTermFeedback(entry, msg);
             } else {
-                bot.sendMessage(msg.chat.id, 'IDK');
+                bot.sendMessage(msg.chat.id, "IDK");
                 requestIDKFeedback(msg);
             }
         }
     },
     {
-        regexp: regexpBuild("category"), command: '/category',
+        regexp: regexpBuild("category"), command: "/category",
         description: texts.commandsAround.category.desk,
         callback: (msg) => {
             if (msg.from && hasRights(msg.from.id)) {
-                const keyboard = categorizeMarkup(msg.chat.id, msg.from?.id)
-                bot.sendMessage(msg.chat.id, 'Choose an action', {
+                const keyboard = categorizeMarkup(msg.chat.id, msg.from?.id);
+                bot.sendMessage(msg.chat.id, "Choose an action", {
                     reply_markup: keyboard
                 }).then(r => registerCallback(r, keyboard));
             }
         }
     },
     {
-        regexp: regexpBuild("delete", baseRegexp.fullMatch), command: '/delete',
+        regexp: regexpBuild("delete", baseRegexp.fullMatch), command: "/delete",
         description: texts.commandsAround.delete.desk,
         callback: (msg, match) => {
             if (msg.from && hasRights(msg.from.id)) {
                 const obscureTerm = fuzzySearch(match);
                 if (!obscureTerm) {
-                    bot.sendMessage(msg.chat.id, 'Not found');
+                    bot.sendMessage(msg.chat.id, "Not found");
                     return;
                 }
                 const confirm = keyboardWithConfirmation(() => {
-                    console.log(`Deleted term ${JSON.stringify(obscureTerm)}`)
+                    console.log(`Deleted term ${JSON.stringify(obscureTerm)}`);
                     prisma.obscure.delete({
                         where: {
                             id: obscureTerm.id
                         }
                     }).then(() => eraseTerm(obscureTerm))
-                        .then(() => bot.sendMessage(msg.chat.id, 'Successful'));
-                }, 'Force', msg.from.id);
+                        .then(() => bot.sendMessage(msg.chat.id, "Successful"));
+                }, "Force", msg.from.id);
                 bot.sendMessage(msg.chat.id, concreteTerm(obscureTerm), {
                     reply_markup: confirm
                 }).then(r => registerCallback(r, confirm));
@@ -223,7 +223,7 @@ export const commands: Command[] = [
         }
     },
     {
-        regexp: regexpBuild("telemetry"), command: '/telemetry', description: texts.commandsAround.telemetry.desk,
+        regexp: regexpBuild("telemetry"), command: "/telemetry", description: texts.commandsAround.telemetry.desk,
         callback: msg => {
             if (msg.from && hasRights(msg.from.id)) {
                 collectTelemetry().then(entry => {
@@ -232,7 +232,7 @@ export const commands: Command[] = [
                         bot.sendMessage(msg.chat.id, formatTelemetry(entry), {
                             reply_markup: replyMarkup
                         }).then(e => {
-                            registerCallback(e, replyMarkup)
+                            registerCallback(e, replyMarkup);
                         });
                     } else
                         bot.sendMessage(msg.chat.id, texts.telemetryModerate.noWaiting);
@@ -241,7 +241,7 @@ export const commands: Command[] = [
         }
     },
     {
-        regexp: regexpBuild("status"), command: '/status', description: texts.commandsAround.status.desk,
+        regexp: regexpBuild("status"), command: "/status", description: texts.commandsAround.status.desk,
         callback: msg => {
             if (msg.from && hasRights(msg.from.id))
                 prisma.telemetry.count({
@@ -252,10 +252,10 @@ export const commands: Command[] = [
                 }).then(telemetry =>
                     prisma.staging.count({
                         where: {
-                            status: 'waiting'
+                            status: "waiting"
                         }
                     }).then(staging =>
-                        bot.sendMessage(msg.chat.id, formatStatus(telemetry, staging))))
+                        bot.sendMessage(msg.chat.id, formatStatus(telemetry, staging))));
             else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     }
@@ -263,15 +263,15 @@ export const commands: Command[] = [
 export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
     callback: (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
-        if (msg.from && msg.chat.type == 'private' && msg.text && !msg.text.startsWith('/') && !msg.reply_to_message) {
+        if (msg.from && msg.chat.type == "private" && msg.text && !msg.text.startsWith("/") && !msg.reply_to_message) {
             const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
                 requestTermFeedback(entry, msg, true);
             } else {
-                bot.sendMessage(msg.chat.id, 'IDK');
+                bot.sendMessage(msg.chat.id, "IDK");
                 requestIDKFeedback(msg);
             }
         }
     }
-}
+};

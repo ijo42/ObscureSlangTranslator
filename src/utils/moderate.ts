@@ -5,7 +5,7 @@ import { format } from "util";
 import prisma from "../db";
 
 const moderators = new Map<number, number>();
-              // TELEGRAM USER ID, MODERATOR ID
+// TELEGRAM USER ID, MODERATOR ID
 
 function firstStart() {
     if (moderators.size === 0) {
@@ -13,7 +13,7 @@ function firstStart() {
         bot.onText(/\/setup (\w{8})/, ((msg, match) => {
             const promotable = msg.from;
             if (promotable && match && match[1] === setupUUID) {
-                promoteUser(promotable.id, -1).then(() => setupUUID = '').then(() =>
+                promoteUser(promotable.id, -1).then(() => setupUUID = "").then(() =>
                     bot.sendMessage(promotable.id, texts.promoteAnnounce))
                     .catch(e => bot.sendMessage(promotable.id, e.stack));
             }

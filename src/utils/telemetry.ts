@@ -7,7 +7,7 @@ import { formatUsername } from "./formatting";
 import { texts } from "../texts";
 
 
-export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested: boolean = false) {
+export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false) {
     if (!originalMsg.from)
         return;
 
@@ -28,7 +28,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                 [
                     {
                         text: `${texts.binary.yes}!`,
-                        callback_data: 'Y',
+                        callback_data: "Y",
                         callback: () =>
                             prisma.telemetry.update({
                                 where: e,
@@ -39,7 +39,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                     },
                     {
                         text: texts.binary.no,
-                        callback_data: 'N',
+                        callback_data: "N",
                         callback: () => prisma.telemetry.update({
                             where: e,
                             data: {
@@ -51,7 +51,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                 ]
             ],
             restrictedTo: originalMsg.from.id
-        }
+        };
 
         bot.sendMessage(originalMsg.chat.id, texts.requestFeedback,
             {
@@ -69,7 +69,7 @@ export function requestIDKFeedback(originalMsg: Message) {
             [
                 {
                     text: texts.binary.yes,
-                    callback_data: 'Y',
+                    callback_data: "Y",
                     callback: () => {
                         if (originalMsg.from)
                             prisma.telemetry.create({
@@ -83,13 +83,13 @@ export function requestIDKFeedback(originalMsg: Message) {
                 },
                 {
                     text: texts.binary.no,
-                    callback_data: 'N',
+                    callback_data: "N",
                     callback: () => bot.sendMessage(originalMsg.chat.id, texts.thx)
                 }
             ]
         ],
         restrictedTo: originalMsg.from.id
-    }
+    };
 
     bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback,
         {

@@ -12,18 +12,18 @@ const options = {
     distance: 10,
     useExtendedSearch: true,
     keys: [
-        'term',
+        "term",
 
         {
-            name: 'value',
+            name: "value",
             weight: 0.5
         },
         {
-            name: 'synonyms',
+            name: "synonyms",
             weight: 0.85
         }
     ]
-}
+};
 
 let fuse: Fuse<ObscureEntry>;
 
@@ -60,29 +60,29 @@ export function eraseTerm(term: ObscureEntry) {
 }
 
 export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => {
-    return query ? fuse.search(query.join(' | ')).slice(0, num).map(value => value.item) : [];
-}
+    return query ? fuse.search(query.join(" | ")).slice(0, num).map(value => value.item) : [];
+};
 
 export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined = (query: string[] | null) => {
     return fuzzySearchWithLen(query, 1)[0];
-}
+};
 
 export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
     const entry = fuzzySearch(query);
     return entry ? formatAnswer(entry) : "*IDK*";
-}
+};
 
 export const findAndValidateTerm = (text: string, chatId: number) => {
 
     if (!(compiledRegexp.fullMatch.test(text)))
         return;
 
-    let fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ").split(" "));
+    const fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ").split(" "));
     if (!fuzzy)
         bot.sendMessage(chatId, "I didn't find this term. Try to provide over inline-mode");
 
     return fuzzy;
-}
+};
 
 export const findAndValidateCategory: (text: string) => Promise<undefined | {
     value: string;
@@ -100,7 +100,7 @@ export const findAndValidateCategory: (text: string) => Promise<undefined | {
             id: true
         }
     }).then(e => e);
-}
+};
 
 export const findByIds = (ids: number[]) =>
     ids.map(termId => fuse.search({
