@@ -9,6 +9,7 @@ const options = {
     includeScore: true,
     minMatchCharLength: 2,
     threshold: 0.55,
+    distance: 10,
     useExtendedSearch: true,
     keys: [
         'term',
@@ -34,15 +35,15 @@ export default async function setup() {
             term: true,
             synonyms: true
         }
-    }).then(val =>
-        fuse = new Fuse(val, options));
+    }).then(val => fuse = new Fuse(val, options));
 }
 
 export function pushTerm(term: ObscureEntry) {
     const fuzzy = fuse.search({
-        $and: [{term: term.term}, {value: term.value}]
+        term: term.term,
+        value: term.value
     })[0];
-    if (fuzzy && fuzzy.score == 0)
+    if (fuzzy && fuzzy.score === 0.0)
         throw new Error("Duplicate key");
     else
         fuse.add(term);
