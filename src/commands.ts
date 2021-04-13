@@ -36,18 +36,19 @@ export const commands: Command[] = [
         command: "/size",
         regexp: regexpBuild("size"),
         description: texts.commandsAround.size.desk,
-        callback: (msg => {
+        async callback(msg: TelegramBot.Message): Promise<unknown> {
             const chatId = msg.chat.id;
-            return prisma.obscure.count().then(num => bot.sendMessage(chatId, formatDBSize(num)));
-        })
+            const num = await prisma.obscure.count();
+            return await bot.sendMessage(chatId, formatDBSize(num));
+        }
     },
 
     {
         command: "/add",
         regexp: regexpBuild("add", baseRegexp.lazyMatch),
         description: texts.commandsAround.add.desk,
-        callback: (msg, match) => {
-            if (!match || !msg.from)
+        callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
+            if (!match || !msg.from || !match[1] || !match[2])
                 return;
             const chatId = msg.chat.id;
             const vars: string[] = reformat(
@@ -70,12 +71,12 @@ export const commands: Command[] = [
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
-                return bot.sendMessage(chatId, formatDuplicationCheck(fuzzy), {
+                bot.sendMessage(chatId, formatDuplicationCheck(fuzzy), {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2"
                 }).then(answer => registerCallback(answer, keyboard));
             } else
-                return upload();
+                upload();
         }
     },
 
@@ -98,7 +99,7 @@ export const commands: Command[] = [
         command: "/promote",
         regexp: regexpBuild("promote"),
         description: texts.commandsAround.promote.desk,
-        callback: (msg) => {
+        callback(msg: TelegramBot.Message): void {
             const promoterId = msg.from?.id;
             if (promoterId && hasRights(promoterId)) {
                 if (msg.reply_to_message?.from && !msg.reply_to_message.from.is_bot) {
@@ -117,24 +118,24 @@ export const commands: Command[] = [
 
                         }).catch(e => bot.sendMessage(promoterId, e.stack)), "Promote", promoterId);
 
-                    return bot.sendMessage(msg.chat.id, formatUserPromotion(texts.confirmPromotion, promotable), {
+                    bot.sendMessage(msg.chat.id, formatUserPromotion(texts.confirmPromotion, promotable), {
                         reply_markup: keyboard
                     }).then(value => registerCallback(value, keyboard));
                 } else
-                    return bot.sendMessage(msg.chat.id, texts.provideAUser, {
+                    bot.sendMessage(msg.chat.id, texts.provideAUser, {
                         parse_mode: "MarkdownV2"
                     });
-            } else return bot.sendMessage(msg.chat.id, texts.hasNoRights);
+            } else bot.sendMessage(msg.chat.id, texts.hasNoRights);
         }
     },
     {
         command: "/moderate",
         regexp: regexpBuild("moderate"), description: texts.commandsAround.moderate.desk,
-        callback: msg => {
+        callback(msg: TelegramBot.Message): void {
             if (!msg.from || !hasRights(msg.from?.id))
-                return bot.sendMessage(msg.chat.id, texts.hasNoRights);
+                bot.sendMessage(msg.chat.id, texts.hasNoRights);
             else
-                return prisma.staging.findFirst({
+                prisma.staging.findFirst({
                     take: 1,
                     where: {
                         status: "waiting"
@@ -169,12 +170,14 @@ export const commands: Command[] = [
                         parse_mode: "MarkdownV2",
                         reply_markup: keyboard
                     }).then(r => registerCallback(r, keyboard));
-                }).catch((e: any) => console.error(e.stack));
+                }).catch(e => console.error(e.stack));
         }
     },
     {
-        regexp: regexpBuild("picture", baseRegexp.searchableExp), command: "/picture",
-        description: texts.commandsAround.picture.desk, callback: (msg, match) => {
+        regexp: regexpBuild("picture", baseRegexp.searchableExp),
+        command: "/picture",
+        description: texts.commandsAround.picture.desk,
+        callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
             const entry = fuzzySearch(match);
             if (entry) {
                 sendPic(msg.chat.id, entry);
@@ -188,7 +191,7 @@ export const commands: Command[] = [
     {
         regexp: regexpBuild("category"), command: "/category",
         description: texts.commandsAround.category.desk,
-        callback: (msg) => {
+        callback(msg: TelegramBot.Message): void {
             if (msg.from && hasRights(msg.from.id)) {
                 const keyboard = categorizeMarkup(msg.chat.id, msg.from?.id);
                 bot.sendMessage(msg.chat.id, "Choose an action", {
@@ -200,7 +203,7 @@ export const commands: Command[] = [
     {
         regexp: regexpBuild("delete", baseRegexp.fullMatch), command: "/delete",
         description: texts.commandsAround.delete.desk,
-        callback: (msg, match) => {
+        callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
             if (msg.from && hasRights(msg.from.id)) {
                 const obscureTerm = fuzzySearch(match);
                 if (!obscureTerm) {
@@ -224,7 +227,7 @@ export const commands: Command[] = [
     },
     {
         regexp: regexpBuild("telemetry"), command: "/telemetry", description: texts.commandsAround.telemetry.desk,
-        callback: msg => {
+        callback(msg: TelegramBot.Message): void {
             if (msg.from && hasRights(msg.from.id)) {
                 collectTelemetry().then(entry => {
                     if (msg.from && entry) {
@@ -242,7 +245,7 @@ export const commands: Command[] = [
     },
     {
         regexp: regexpBuild("status"), command: "/status", description: texts.commandsAround.status.desk,
-        callback: msg => {
+        callback(msg: TelegramBot.Message): void {
             if (msg.from && hasRights(msg.from.id))
                 prisma.telemetry.count({
                     where: {
@@ -262,7 +265,7 @@ export const commands: Command[] = [
 ];
 export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
-    callback: (msg: TelegramBot.Message, match: RegExpExecArray | null) => {
+    callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
         if (msg.from && msg.chat.type == "private" && msg.text && !msg.text.startsWith("/") && !msg.reply_to_message) {
             const entry = fuzzySearch(match);
             if (entry) {

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { debug } from "../app";
 
 const prisma = new PrismaClient({
     log: [
@@ -21,8 +22,7 @@ const prisma = new PrismaClient({
     ],
 });
 prisma.$on("query", e => {
-    // @ts-ignore
-    if (global.debug)
+    if (debug)
         console.log(e);
 });
 

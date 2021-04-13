@@ -27,7 +27,7 @@ const options = {
 
 let fuse: Fuse<ObscureEntry>;
 
-export default async function setup() {
+export default async function setup(): Promise<void> {
     await prisma.obscure.findMany({
         select: {
             id: true,
@@ -38,7 +38,7 @@ export default async function setup() {
     }).then(val => fuse = new Fuse(val, options));
 }
 
-export function pushTerm(term: ObscureEntry) {
+export function pushTerm(term: ObscureEntry): void {
     const fuzzy = fuse.search({
         term: term.term,
         value: term.value
@@ -49,13 +49,13 @@ export function pushTerm(term: ObscureEntry) {
         fuse.add(term);
 }
 
-export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => void) {
+export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => void): void {
     fuse.remove((doc: ObscureEntry) => term == doc);
     operation(term);
     fuse.add(term);
 }
 
-export function eraseTerm(term: ObscureEntry) {
+export function eraseTerm(term: ObscureEntry): void {
     fuse.remove((doc: ObscureEntry) => term == doc);
 }
 
@@ -72,7 +72,7 @@ export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[
     return entry ? formatAnswer(entry) : "*IDK*";
 };
 
-export const findAndValidateTerm = (text: string, chatId: number) => {
+export const findAndValidateTerm: (text: string, chatId: number) => (ObscureEntry | undefined) = (text: string, chatId: number) => {
 
     if (!(compiledRegexp.fullMatch.test(text)))
         return;
@@ -102,7 +102,7 @@ export const findAndValidateCategory: (text: string) => Promise<undefined | {
     }).then(e => e);
 };
 
-export const findByIds = (ids: number[]) =>
+export const findByIds: (ids: number[]) => (ObscureEntry | undefined)[] = (ids: number[]) =>
     ids.map(termId => fuse.search({
         id: termId.toString()
     }, {

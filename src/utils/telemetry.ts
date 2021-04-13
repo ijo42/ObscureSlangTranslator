@@ -7,7 +7,7 @@ import { formatUsername } from "./formatting";
 import { texts } from "../texts";
 
 
-export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false) {
+export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false): void {
     if (!originalMsg.from)
         return;
 
@@ -60,7 +60,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
     });
 }
 
-export function requestIDKFeedback(originalMsg: Message) {
+export function requestIDKFeedback(originalMsg: Message): void {
     if (!originalMsg.from)
         return;
 
