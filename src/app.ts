@@ -5,10 +5,10 @@ import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
 import setupDrawing from "./utils/drawing";
 import { processInline, processQuery } from "./inLineHandler";
-import prisma from './db';
+import prisma from "./db";
 
 // replace the value below with the Telegram token you receive from @BotFather
-const token = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN';
+const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
 // @ts-ignore
 global.debug = process.env.debug || false;
 // Create a bot that uses 'polling' to fetch new updates
@@ -21,19 +21,19 @@ async function main() {
     await setupModerateCache();
     await setupDrawing();
 
-    bot.on('new_chat_members', msg => {
+    bot.on("new_chat_members", msg => {
         bot.sendMessage(msg.chat.id, texts.welcome);
     });
 
-    bot.on('polling_error', error => {
+    bot.on("polling_error", error => {
         console.log(JSON.stringify(error));  // => 'EFATAL'
     });
 
-    bot.on('callback_query', query => {
+    bot.on("callback_query", query => {
         if (query.message) processQuery(query);
     });
 
-    bot.on('inline_query', query => processInline(query));
+    bot.on("inline_query", query => processInline(query));
 
     commands.forEach(command => {
         bot.onText(command.regexp, command.callback);
@@ -43,13 +43,13 @@ async function main() {
 
     await bot.setMyCommands(commands);
 
-    console.log(`Registered ${commands.length} commands`)
+    console.log(`Registered ${commands.length} commands`);
     bot.getMe().then(value => {
         if (value.username)
             console.log(`Bot: https://t.me/${value.username}`);
     });
 
-    console.log('Bot setup successful')
+    console.log("Bot setup successful");
 }
 
 main()

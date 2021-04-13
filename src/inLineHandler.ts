@@ -35,12 +35,12 @@ export const processQuery = (query: CallbackQuery) => {
                     .then(() => bot.answerCallbackQuery(query.id))
                     .catch((e: { stack: string; }) => bot.sendMessage(query.from.id, e.stack));
     }
-}
+};
 
 export const processInline = (query: TelegramBot.InlineQuery) =>
     bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value =>
         <InlineQueryResultArticle>{
-            type: 'article',
+            type: "article",
             id: randomInt(10000).toString(),
             title: value.term,
             input_message_content: <InputTextMessageContent>{

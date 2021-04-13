@@ -36,6 +36,6 @@ export function sendPic(id: number | string, entry: ObscureEntry) {
 
         image.getBufferAsync(Jimp.MIME_PNG).then(i => bot.sendPhoto(id, i, {
             caption: formatAnswerUnpreceded(entry)
-        }))
+        }));
     });
 }
