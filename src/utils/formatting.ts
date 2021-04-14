@@ -14,11 +14,11 @@ export const formatAnswerUnpreceded: (entry: ObscureEntry) => string = (entry: O
 export const formatAnswer: (entry: ObscureEntry) => string = (entry: ObscureEntry) =>
     precedeChar(formatAnswerUnpreceded(entry));
 
-export const capitalizeFirstLetter: ([...rest]: readonly string[]) => string = ([...rest]) =>
+export const capitalizeFirstLetter: ([...rest]: string) => string = ([...rest]) =>
     rest.shift()?.toLocaleUpperCase() + rest.join("");
 
 export const capitalize: ([...st]: readonly string[]) => string[] = ([...st]) =>
-    st.map(str => capitalizeFirstLetter([str]));
+    st.map(str => capitalizeFirstLetter(str));
 
 export const precedeChar: (s: string) => string = (s: string) =>
     s.replace(/([_\][)(~>#+\-=|}{.!])/gm, "\\$1");
