@@ -22,8 +22,9 @@ const prisma = new PrismaClient({
     ],
 });
 prisma.$on("query", e => {
-    if (debug)
+    if (debug) {
         console.log(e);
+    }
 });
 
 export default prisma;

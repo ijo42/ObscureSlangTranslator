@@ -1,6 +1,7 @@
 export default function build(command: string, args: string | undefined = undefined): RegExp {
-    if (!args)
+    if (!args) {
         return new RegExp(`^/${command}(?:${baseRegexp.botMention})?$`);
+    }
     return new RegExp(`^/${command}(?:${baseRegexp.botMention})? ${args}$`);
 }
 
@@ -10,7 +11,7 @@ export const baseRegexp = {
     searchableExp: "([a-zA-Zа-яА-ЯёЁ0-9_ ]+)",
     categoryDef: "[a-zA-Zа-яА-ЯёЁ0-9_]+",
     fullMatch: "([a-zA-Zа-яА-ЯёЁ0-9_]{2,}) - ([a-zA-Zа-яА-ЯёЁ0-9_,.)( -]{2,})",
-    lazyMatch: "([a-zA-Zа-яА-ЯёЁ0-9_]{2,})(?:(?: ?- ?)| +)([a-zA-Zа-яА-ЯёЁ0-9_,.)( -]{2,})"
+    lazyMatch: "([a-zA-Zа-яА-ЯёЁ0-9_]{2,})(?:(?: ?- ?)| +)([a-zA-Zа-яА-ЯёЁ0-9_,.)( -]{2,})",
 };
 
 export const compiledRegexp = {

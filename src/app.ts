@@ -11,7 +11,7 @@ import prisma from "./db";
 const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
 export const debug = process.env.debug || false;
 // Create a bot that uses 'polling' to fetch new updates
-export const bot = new TelegramBot(token, {polling: true});
+export const bot = new TelegramBot(token, { polling: true });
 
 async function main() {
     await prisma.$connect();
@@ -29,7 +29,9 @@ async function main() {
     });
 
     bot.on("callback_query", query => {
-        if (query.message) processQuery(query);
+        if (query.message) {
+            processQuery(query);
+        }
     });
 
     bot.on("inline_query", query => processInline(query));
@@ -44,8 +46,9 @@ async function main() {
 
     console.log(`Registered ${commands.length} commands`);
     bot.getMe().then(value => {
-        if (value.username)
+        if (value.username) {
             console.log(`Bot: https://t.me/${value.username}`);
+        }
     });
 
     console.log("Bot setup successful");
