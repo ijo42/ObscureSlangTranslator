@@ -6,22 +6,23 @@ import prisma from "../db";
 import { formatUsername } from "./formatting";
 import { texts } from "../texts";
 
-
 export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false): void {
-    if (!originalMsg.from)
+    if (!originalMsg.from) {
         return;
+    }
 
     prisma.telemetry.create({
         data: {
             requested_term_id: term.id,
-            author: formatUsername(originalMsg.from)
+            author: formatUsername(originalMsg.from),
         },
         select: {
-            id: true
-        }
+            id: true,
+        },
     }).then(e => {
-        if (!(originalMsg.from && feedbackRequested))
+        if (!(originalMsg.from && feedbackRequested)) {
             return;
+        }
 
         const markup: Keyboard = {
             inline_keyboard: [
@@ -29,13 +30,12 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                     {
                         text: `${texts.binary.yes}!`,
                         callback_data: "Y",
-                        callback: () =>
-                            prisma.telemetry.update({
-                                where: e,
-                                data: {
-                                    is_useful: true
-                                }
-                            }).then(() => bot.sendMessage(originalMsg.chat.id, texts.thx))
+                        callback: () => prisma.telemetry.update({
+                            where: e,
+                            data: {
+                                is_useful: true,
+                            },
+                        }).then(() => bot.sendMessage(originalMsg.chat.id, texts.thx)),
                     },
                     {
                         text: texts.binary.no,
@@ -44,25 +44,25 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                             where: e,
                             data: {
                                 is_useful: false,
-                                origin_message: originalMsg.text
-                            }
-                        }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise))
-                    }
-                ]
+                                origin_message: originalMsg.text,
+                            },
+                        }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise)),
+                    },
+                ],
             ],
-            restrictedTo: originalMsg.from.id
+            restrictedTo: originalMsg.from.id,
         };
 
-        bot.sendMessage(originalMsg.chat.id, texts.requestFeedback,
-            {
-                reply_markup: markup
-            }).then(r => registerCallback(r, markup));
+        bot.sendMessage(originalMsg.chat.id, texts.requestFeedback, {
+            reply_markup: markup,
+        }).then(r => registerCallback(r, markup));
     });
 }
 
 export function requestIDKFeedback(originalMsg: Message): void {
-    if (!originalMsg.from)
+    if (!originalMsg.from) {
         return;
+    }
 
     const markup: Keyboard = {
         inline_keyboard: [
@@ -71,28 +71,28 @@ export function requestIDKFeedback(originalMsg: Message): void {
                     text: texts.binary.yes,
                     callback_data: "Y",
                     callback: () => {
-                        if (originalMsg.from)
+                        if (originalMsg.from) {
                             prisma.telemetry.create({
                                 data: {
                                     is_useful: false,
                                     author: formatUsername(originalMsg.from),
-                                    origin_message: originalMsg.text
-                                }
+                                    origin_message: originalMsg.text,
+                                },
                             }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));
-                    }
+                        }
+                    },
                 },
                 {
                     text: texts.binary.no,
                     callback_data: "N",
-                    callback: () => bot.sendMessage(originalMsg.chat.id, texts.thx)
-                }
-            ]
+                    callback: () => bot.sendMessage(originalMsg.chat.id, texts.thx),
+                },
+            ],
         ],
-        restrictedTo: originalMsg.from.id
+        restrictedTo: originalMsg.from.id,
     };
 
-    bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback,
-        {
-            reply_markup: markup
-        }).then(r => registerCallback(r, markup));
+    bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback, {
+        reply_markup: markup,
+    }).then(r => registerCallback(r, markup));
 }

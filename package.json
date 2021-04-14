@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "ts-node src/app.ts",
     "start": "node dist/app.js",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "eslint:check": "eslint ./src/**/*",
+    "eslint:fix": "eslint ./src/**/* --fix"
   },
   "keywords": [],
   "author": "ijo42 <admin@ijo42.ru>",
