@@ -381,25 +381,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
     };
 }
 
-export const collectTelemetry = (uID: number | null = null) => {
-    if (uID) {
-        return prisma.telemetry.findFirst({
-            where: {
-                moderated_by: null,
-                is_useful: false,
-            },
-            select: {
-                id: true,
-                is_useful: true,
-                origin_message: true,
-                obscure: true,
-            },
-            skip: 1,
-            cursor: {
-                id: uID,
-            },
-        });
-    }
+export function collectTelemetry(uID?: number): Promise<{ obscure: ObscureEntry | null; id: number; is_useful: boolean | null; origin_message: string | null } | null> {
     return prisma.telemetry.findFirst({
         where: {
             moderated_by: null,
@@ -411,12 +393,16 @@ export const collectTelemetry = (uID: number | null = null) => {
             origin_message: true,
             obscure: true,
         },
+        skip: uID ? 1 : undefined,
+        cursor: uID ? {
+            id: uID,
+        } : undefined,
     });
-};
+}
 
 export function telemetryMarkup(message: Message, restrictedTo: number, reset = false): Keyboard {
-    function forward(query: { message: { from?: User, text: string, chat: Chat, message_id: number } }) {
-        collectTelemetry(reset ? null : Number(grabUsrID(query.message.text))).then(entry => {
+    function forward(id: number, query: { message: { from?: User, chat: Chat, message_id: number } }) {
+        collectTelemetry(reset ? undefined : id).then(entry => {
             if (query.message && message.from) {
                 const replyMarkup = telemetryMarkup(message, message.from.id, !entry);
                 bot.editMessageText(entry ? formatTelemetry(entry) : texts.telemetryModerate.noWaiting, {
@@ -438,10 +424,9 @@ export function telemetryMarkup(message: Message, restrictedTo: number, reset = 
                     callback_data: "F",
                     callback: query => {
                         if (query.message && query.message.text) {
-                            forward({
+                            forward(Number(grabUsrID(query.message.text)), {
                                 message: {
                                     from: query.message.from,
-                                    text: query.message.text,
                                     chat: query.message.chat,
                                     message_id: query.message.message_id,
                                 },
@@ -455,10 +440,9 @@ export function telemetryMarkup(message: Message, restrictedTo: number, reset = 
                     callback: query => {
                         let id;
                         if (query.message && query.message.text && (id = Number(grabUsrID(query.message.text))) !== 0) {
-                            forward({
+                            forward(Number(grabUsrID(query.message.text)), {
                                 message: {
                                     from: query.message.from,
-                                    text: query.message.text,
                                     chat: query.message.chat,
                                     message_id: query.message.message_id,
                                 },
