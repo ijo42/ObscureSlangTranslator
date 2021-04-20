@@ -8,10 +8,10 @@ datasource db {
 }
 
 model moderators {
-  id          Int          @id @default(autoincrement())
-  user_id     Int          @unique
+  id          Int         @id
   promoted_by Int
-  categories  categories[]
+  users       users       @relation(fields: [id], references: [id])
+  categories  categories?
   staging     staging[]
   telemetry   telemetry[]
 }
@@ -20,8 +20,6 @@ model obscure {
   id         Int          @id @default(autoincrement())
   term       String
   value      String
-  author     String
-  submitted  DateTime?    @default(now()) @db.Timestamp(6)
   synonyms   String[]
   staging    staging[]
   telemetry  telemetry[]
@@ -35,11 +33,12 @@ model staging {
   updated     DateTime        @default(now()) @db.Timestamp(6)
   term        String
   value       String
-  author      String
   reviewed_by Int?
   accepted_as Int?
+  author      Int
   obscure     obscure?        @relation(fields: [accepted_as], references: [id])
-  moderators  moderators?     @relation(fields: [reviewed_by], references: [user_id])
+  users       users           @relation(fields: [author], references: [id])
+  moderators  moderators?     @relation(fields: [reviewed_by], references: [id])
 }
 
 model categories {
@@ -48,21 +47,31 @@ model categories {
   created    DateTime   @default(now()) @db.Timestamp(6)
   updated    DateTime   @default(now()) @db.Timestamp(6)
   author     Int
-  moderators moderators @relation(fields: [author], references: [user_id])
+  moderators moderators @relation(fields: [id], references: [id])
   obscure    obscure[]  @relation("category_to_obscure")
 }
 
 model telemetry {
   id                Int         @id @default(autoincrement())
   requested_term_id Int?
-  author            String
-  origin_message    String?
+  author            Int
   is_useful         Boolean?
   created           DateTime    @default(now()) @db.Timestamp(6)
   moderated_at      DateTime?   @db.Timestamp(6)
   moderated_by      Int?
-  moderators        moderators? @relation(fields: [moderated_by], references: [user_id])
-  obscure           obscure?     @relation(fields: [requested_term_id], references: [id])
+  origin_message    String?
+  users             users       @relation(fields: [author], references: [id])
+  moderators        moderators? @relation(fields: [moderated_by], references: [id])
+  obscure           obscure?    @relation(fields: [requested_term_id], references: [id])
+}
+
+model users {
+  id                Int         @id @default(autoincrement())
+  telegram_id       Int?        @unique
+  telegram_username String?
+  moderators        moderators?
+  staging           staging[]
+  telemetry         telemetry[]
 }
 
 enum staging_status {
