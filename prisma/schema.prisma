@@ -48,6 +48,7 @@ model categories {
   updated    DateTime   @default(now()) @db.Timestamp(6)
   author     Int
   moderators moderators @relation(fields: [id], references: [id])
+  users      users      @relation(fields: [author], references: [id])
   obscure    obscure[]  @relation("category_to_obscure")
 }
 
@@ -66,11 +67,12 @@ model telemetry {
 }
 
 model users {
-  id                Int         @id @default(autoincrement())
-  telegram_id       Int?        @unique
+  id                Int          @id @default(autoincrement())
+  telegram_id       Int?         @unique
   telegram_username String?
   moderators        moderators?
   staging           staging[]
+  categories        categories[]
   telemetry         telemetry[]
 }
 

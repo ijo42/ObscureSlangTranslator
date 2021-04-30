@@ -1,0 +1,2 @@
+-- AddForeignKey
+ALTER TABLE "categories" ADD FOREIGN KEY ("author") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
