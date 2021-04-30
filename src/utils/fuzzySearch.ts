@@ -25,7 +25,7 @@ const options = {
     ],
 };
 
-let fuse: Fuse<ObscureEntry>;
+const fuse: Fuse<ObscureEntry> = new Fuse([], options);
 
 export default async function setup(): Promise<void> {
     await prisma.obscure.findMany({
@@ -36,7 +36,7 @@ export default async function setup(): Promise<void> {
             synonyms: true,
         },
     })
-        .then(val => fuse = new Fuse(val, options));
+        .then(val => fuse.setCollection(val));
 }
 
 export function pushTerm(term: ObscureEntry): void {
