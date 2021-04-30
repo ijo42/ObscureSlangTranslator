@@ -10,6 +10,7 @@ datasource db {
 model moderators {
   id          Int         @id
   promoted_by Int
+  promoted_at DateTime    @default(now()) @db.Timestamp(6)
   users       users       @relation(fields: [id], references: [id])
   categories  categories?
   staging     staging[]
@@ -30,7 +31,7 @@ model staging {
   id          Int             @id @default(autoincrement())
   status      staging_status? @default(waiting)
   created     DateTime        @default(now()) @db.Timestamp(6)
-  updated     DateTime        @default(now()) @db.Timestamp(6)
+  updated     DateTime        @default(now()) @updatedAt @db.Timestamp(6)
   term        String
   value       String
   reviewed_by Int?
@@ -45,7 +46,7 @@ model categories {
   id         Int        @id @default(autoincrement())
   value      String
   created    DateTime   @default(now()) @db.Timestamp(6)
-  updated    DateTime   @default(now()) @db.Timestamp(6)
+  updated    DateTime   @default(now()) @updatedAt @db.Timestamp(6)
   author     Int
   moderators moderators @relation(fields: [id], references: [id])
   users      users      @relation(fields: [author], references: [id])
@@ -71,6 +72,8 @@ model users {
   telegram_id       Int?         @unique
   telegram_username String?
   moderators        moderators?
+  joined            DateTime     @default(now()) @db.Timestamp(6)
+  last_activity     DateTime     @default(now()) @updatedAt @db.Timestamp(6)
   staging           staging[]
   categories        categories[]
   telemetry         telemetry[]
