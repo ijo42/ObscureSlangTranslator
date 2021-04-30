@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.3.0...v1.4.0) (2021-04-30)
+
+
+### Features
+
+* localized to russian ([ede0f8f](https://www.github.com/ijo42/ObscureSlangTranslator/commit/ede0f8f0664640ce407f6c1724672cb0592f77f8))
+* status command ([76a5672](https://www.github.com/ijo42/ObscureSlangTranslator/commit/76a56720fa4d2957675b41d08c6f69d746487b2f))
+* telemetry cyclical moderating ([be52aca](https://www.github.com/ijo42/ObscureSlangTranslator/commit/be52aca3fe507adc1bc8a507bb8ba0ee31f0a2aa))
+* telemetry moderating ([8b4ef3d](https://www.github.com/ijo42/ObscureSlangTranslator/commit/8b4ef3d047c312d46024d704417628e510e3ceeb))
+* term erasing command ([ce5d0e9](https://www.github.com/ijo42/ObscureSlangTranslator/commit/ce5d0e987b8045f1f0d72cc393dac1525b0e321d))
+
+
+### Bug Fixes
+
+* abnormal search distance ([479c1f4](https://www.github.com/ijo42/ObscureSlangTranslator/commit/479c1f4d8a10f11c5e3f2595d41419e6d3e7a64b))
+* **ci:** pretty big cache ([89fb773](https://www.github.com/ijo42/ObscureSlangTranslator/commit/89fb77330f0e41f34631c199681976f2415a595a))
+* comma-word splitter ([977d691](https://www.github.com/ijo42/ObscureSlangTranslator/commit/977d6919df3377d132753b404bcabee12ed789fb))
+* unexpected uppercase ([179b7ca](https://www.github.com/ijo42/ObscureSlangTranslator/commit/179b7ca3595a8a6bca66afd3f2c1e91faff88829))
+
 ## [1.3.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.2.0...v1.3.0) (2021-04-05)
 
 
