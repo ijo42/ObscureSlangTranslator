@@ -18,7 +18,6 @@ import {
     formatMention,
     formatStatus,
     formatTelemetry,
-    formatUsername,
     formatUserPromotion,
     reformat,
 } from "./utils/formatting";
@@ -30,6 +29,7 @@ import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
 import { sendPic } from "./utils/drawing";
 import TelegramBot from "node-telegram-bot-api";
 import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
+import { User } from "./db/interaction";
 
 export const commands: Command[] = [
     {
@@ -47,8 +47,15 @@ export const commands: Command[] = [
         regexp: regexpBuild("add", baseRegexp.lazyMatch),
         description: texts.commandsAround.add.desk,
         callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
+
             if (!match || !msg.from || !match[1] || !match[2]) {
                 return;
+            }
+
+            function upload() {
+                processReplenishment(entry, <User>msg.from)
+                    .then(() => bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
+                    .catch(e => bot.sendMessage(msg.chat.id, e));
             }
             const chatId = msg.chat.id;
             const vars: string[] = reformat(
@@ -64,9 +71,6 @@ export const commands: Command[] = [
                 term: vars[0],
                 value: vars[1],
             };
-            const upload = () => processReplenishment(entry, msg.from ? formatUsername(msg.from) : "")
-                .then(() => bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
-                .catch(e => bot.sendMessage(msg.chat.id, e));
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
@@ -104,7 +108,7 @@ export const commands: Command[] = [
             if (promoterId && hasRights(promoterId)) {
                 if (msg.reply_to_message?.from && !msg.reply_to_message.from.is_bot) {
                     const promotable = msg.reply_to_message.from;
-                    const keyboard = keyboardWithConfirmation(() => promoteUser(promotable.id, promoterId)
+                    const keyboard = keyboardWithConfirmation(() => promoteUser(promotable, promoterId)
                         .then(() => {
                             if (hasRights(promotable.id)) {
                                 bot.sendMessage(msg.chat.id, "Already has rights");
@@ -150,7 +154,7 @@ export const commands: Command[] = [
                         id: true,
                         value: true,
                         term: true,
-                        author: true,
+                        users: true,
                     },
                 })
                     .then(res => {
@@ -161,13 +165,15 @@ export const commands: Command[] = [
                         if (!msg.from) {
                             throw new Error("msg.from is undefined");
                         }
-
                         const match = {
                             id: -1, synonyms: [],
                             stagingId: res.id,
                             value: res.value,
                             term: res.term,
-                            author: res.author,
+                            author: {
+                                id: <number>res.users.telegram_id,
+                                first_name: <string>res.users.telegram_username,
+                            },
                             reviewer: msg.from.id,
                             reviewingChat: msg.chat.id,
                             msgId: msg.message_id,

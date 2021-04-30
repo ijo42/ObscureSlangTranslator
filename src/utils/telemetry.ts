@@ -3,8 +3,8 @@ import { Message } from "node-telegram-bot-api";
 import { bot } from "../app";
 import { registerCallback } from "../inLineHandler";
 import prisma from "../db";
-import { formatUsername } from "./formatting";
 import { texts } from "../texts";
+import { userValidate } from "../db/interaction";
 
 export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false): void {
     if (!originalMsg.from) {
@@ -13,8 +13,12 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
 
     prisma.telemetry.create({
         data: {
-            requested_term_id: term.id,
-            author: formatUsername(originalMsg.from),
+            users: userValidate(originalMsg.from),
+            obscure: {
+                connect: {
+                    id: term.id,
+                },
+            },
         },
         select: {
             id: true,
@@ -31,7 +35,9 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                         text: `${texts.binary.yes}!`,
                         callback_data: "Y",
                         callback: () => prisma.telemetry.update({
-                            where: e,
+                            where: {
+                                id: e.id,
+                            },
                             data: {
                                 is_useful: true,
                             },
@@ -41,7 +47,9 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                         text: texts.binary.no,
                         callback_data: "N",
                         callback: () => prisma.telemetry.update({
-                            where: e,
+                            where: {
+                                id: e.id,
+                            },
                             data: {
                                 is_useful: false,
                                 origin_message: originalMsg.text,
@@ -75,7 +83,7 @@ export function requestIDKFeedback(originalMsg: Message): void {
                             prisma.telemetry.create({
                                 data: {
                                     is_useful: false,
-                                    author: formatUsername(originalMsg.from),
+                                    users: userValidate(originalMsg.from),
                                     origin_message: originalMsg.text,
                                 },
                             }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));

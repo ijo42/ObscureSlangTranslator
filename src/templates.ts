@@ -6,24 +6,28 @@ import {
     InlineKeyboardMarkup,
     Message,
     ReplyKeyboardMarkup,
-    User,
 } from "node-telegram-bot-api";
 import { bot } from "./app";
 import {
-    editTerm,
-    findAndValidateCategory,
-    findAndValidateTerm,
-    findByIds,
+    editTerm, findAndValidateCategory,
+    findAndValidateTerm, findByIds,
     fuzzySearchWithLen,
     pushTerm,
 } from "./utils/fuzzySearch";
-import { formatAnswer, formatAnswerUnpreceded, formatTelemetry, grabUsrID, reformatStr } from "./utils/formatting";
+import {
+    formatAnswer,
+    formatAnswerUnpreceded,
+    formatTelemetry,
+    grabUsrID,
+    reformatStr,
+} from "./utils/formatting";
 import { texts } from "./texts";
 import { format } from "util";
 import prisma from "./db";
+import { registerCallback } from "./inLineHandler";
+import { pushEntry, pushStaging, User, userValidate } from "./db/interaction";
 import { hasRights } from "./utils/moderate";
 import { compiledRegexp } from "./utils/regexpBuilder";
-import { registerCallback } from "./inLineHandler";
 
 export interface Command extends BotCommand {
     regexp: RegExp;
@@ -41,7 +45,7 @@ export interface ObscureEntry {
 
 export interface ModerateAction extends ObscureEntry {
     stagingId: number;
-    author: string;
+    author: User;
     reviewer: number;
     reviewingChat: number;
     msgId: number;
@@ -56,11 +60,11 @@ export interface Keyboard extends InlineKeyboardMarkup {
     restrictedTo: number | boolean;
 }
 
-function processCategory(msg: string, author: number): Promise<string> {
+function processCategory(msg: string, author: User): Promise<string> {
     return prisma.categories.create({
         data: {
             value: reformatStr(msg),
-            author,
+            users: userValidate(author),
         },
         select: {
             value: true,
@@ -74,31 +78,13 @@ Definition: ${item.value}
 Id: ${item.id}`;
 }
 
-export async function processReplenishment(entry: ObscureEntry, author: string, staging = true): Promise<ObscureEntry> {
+export async function processReplenishment(entry: ObscureEntry, author: User, staging = true): Promise<ObscureEntry> {
     if (staging) {
-        await prisma.staging.create({
-            data: {
-                term: entry.term,
-                value: entry.value,
-                author,
-            },
-            select: {
-                id: true,
-            },
-        }).then(val => {
+        await pushStaging(entry, author).then(val => {
             entry.id = val.id;
         });
     } else {
-        await prisma.obscure.create({
-            data: {
-                term: entry.term,
-                value: entry.value,
-                author,
-            },
-            select: {
-                id: true,
-            },
-        }).then(val => {
+        await pushEntry(entry).then(val => {
             entry.id = val.id;
             pushTerm(entry);
         });
@@ -152,13 +138,13 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             },
                             data: {
                                 status: "accepted",
-                                reviewed_by: match.reviewer,
+                                reviewed_by: hasRights(match.reviewer),
                                 accepted_as: acceptedAs.id,
                                 updated: new Date(),
                             },
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.acceptedNotify);
-                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
+                            bot.sendMessage(match.author.id, format(texts.moderateAnnounce.accepted, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2",
                             });
                         })
@@ -175,12 +161,12 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             },
                             data: {
                                 status: "declined",
-                                reviewed_by: match.reviewer,
+                                reviewed_by: hasRights(match.reviewer),
                                 updated: new Date(),
                             },
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.declinedNotify);
-                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.declined, formatAnswer(match)), {
+                            bot.sendMessage(match.author.id, format(texts.moderateAnnounce.declined, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2",
                             });
                         })
@@ -199,12 +185,12 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                             },
                             data: {
                                 status: "request_changes",
-                                reviewed_by: match.reviewer,
+                                reviewed_by: hasRights(match.reviewer),
                                 updated: new Date(),
                             },
                         }).then(() => {
                             bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.requestNotify);
-                            bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
+                            bot.sendMessage(match.author.id, format(texts.moderateAnnounce.request_changes, formatAnswer(match)), {
                                 parse_mode: "MarkdownV2",
                             });
                         })
@@ -241,14 +227,14 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 },
                                 data: {
                                     status: "synonym",
-                                    reviewed_by: match.reviewer,
+                                    reviewed_by: hasRights(match.reviewer),
                                     accepted_as: originEntry.id,
                                     updated: new Date(),
                                 },
                             }).then(() => {
                                 editTerm(originEntry, t => t.synonyms.push(match.term));
                                 bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.synonymNotify, { reply_markup: { remove_keyboard: true } });
-                                bot.sendMessage(grabUsrID(match.author), format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
+                                bot.sendMessage(match.author.id, format(texts.moderateAnnounce.synonym, formatAnswer(match), formatAnswer(originEntry)), {
                                     parse_mode: "MarkdownV2",
                                 });
                             })
@@ -291,7 +277,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                         return bot.sendMessage(chatId, "Reply to this message w/ name of new Category").then(message => {
                             const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
                                 if (msg.from && hasRights(msg.from.id) && msg.text && compiledRegexp.categoryDef.test(msg.text)) {
-                                    processCategory(msg.text, msg.from.id).then(ret => bot.sendMessage(chatId, `Successful created new category ${ret}`))
+                                    processCategory(msg.text, msg.from).then(ret => bot.sendMessage(chatId, `Successful created new category ${ret}`))
                                         .then(() => bot.removeReplyListener(listenId));
                                 } else {
                                     bot.sendMessage(msg.chat.id, texts.hasNoRights);
@@ -452,7 +438,7 @@ export function telemetryMarkup(message: Message, restrictedTo: number, reset = 
                                     id,
                                 },
                                 data: {
-                                    moderated_by: restrictedTo,
+                                    moderated_by: hasRights(restrictedTo),
                                     moderated_at: new Date(),
                                 },
                             }).then(() => bot.sendMessage(message.chat.id, texts.success));

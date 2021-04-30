@@ -2,10 +2,11 @@ import * as util from "util";
 import { ObscureEntry } from "../templates";
 import { texts } from "../texts";
 import { randomBytes } from "crypto";
+import { User } from "../db/interaction";
 
-export const formatUsername: (user: { id: number; username?: string; first_name?: string; last_name?: string }) => string =
-    (user: { id: number, username?: string, first_name?: string, last_name?: string }) => util.format(`%s <${user.id}>`, user.username ||
-        `${user.first_name} ${user.last_name || "-"}`);
+export const formatUsername: (user: User) => string =
+    (user: User) => user.username ||
+        `${user.first_name} ${user.last_name || "-"}`;
 
 export const formatAnswerUnpreceded: (entry: ObscureEntry) => string = (entry: ObscureEntry) => `${entry.term} - ${entry.value}`;
 
@@ -28,9 +29,9 @@ export const formatDBSize: (s: (string | number)) => string = (s: string | numbe
 
 export const formatDuplicationCheck: (entry: ObscureEntry) => string = (entry: ObscureEntry) => util.format(texts.duplicationCheck, formatAnswer(entry));
 
-export const formatMention: (promotable: { id: number; username?: string; first_name?: string; last_name?: string }) => string = (promotable: { id: number; username?: string; first_name?: string; last_name?: string }) => promotable.username ? "@" : `${  formatUsername(promotable)}`;
+export const formatMention: (promotable: User) => string = (promotable: User) => promotable.username ? "@" : `${  formatUsername(promotable)}`;
 
-export const formatUserPromotion: (text: string, promotable: { id: number; username?: string; first_name?: string; last_name?: string }) => string = (text: string, promotable: { id: number, username?: string, first_name?: string, last_name?: string }) => util.format(text, formatMention(promotable));
+export const formatUserPromotion: (text: string, promotable: User) => string = (text: string, promotable: User) => util.format(text, formatMention(promotable));
 
 export const formatStatus: (telemetryEntry: number, staging: number) => string = (telemetryEntry: number, staging: number) => `${texts.commandsAround.status.desk}:
 ${texts.awaitedModerating}: ${staging} ${texts.terms}
