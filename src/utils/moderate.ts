@@ -52,7 +52,11 @@ export function promoteUser(promotable: User, promoterId: number): Promise<void>
         },
         select: {
             id: true,
-            users: true,
+            users: {
+                select: {
+                    telegram_id: true,
+                },
+            },
         },
     }).then(usr => {
         moderators.set(<number>usr.users.telegram_id, usr.id);

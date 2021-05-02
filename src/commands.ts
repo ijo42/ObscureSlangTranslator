@@ -226,6 +226,7 @@ export const commands: Command[] = [
                         where: {
                             id: obscureTerm.id,
                         },
+                        select: {},
                     })
                         .then(() => eraseTerm(obscureTerm))
                         .then(() => bot.sendMessage(msg.chat.id, "Successful"));
@@ -270,24 +271,23 @@ export const commands: Command[] = [
         description: texts.commandsAround.status.desk,
         callback(msg: TelegramBot.Message): void {
             if (msg.from && hasRights(msg.from.id)) {
-                prisma.telemetry.count({
+                Promise.all([prisma.telemetry.count({
                     where: {
                         moderated_by: null,
                         is_useful: false,
                     },
-                })
-                    .then(telemetry => prisma.staging.count({
-                        where: {
-                            status: "waiting",
-                        },
-                    })
-                        .then(staging => bot.sendMessage(msg.chat.id, BaseFormatting.formatStatus(telemetry, staging))));
+                }), prisma.staging.count({
+                    where: {
+                        status: "waiting",
+                    },
+                })]).then(([telemetry, staging]) => bot.sendMessage(msg.chat.id, BaseFormatting.formatStatus(telemetry, staging)));
             } else {
                 bot.sendMessage(msg.chat.id, texts.hasNoRights);
             }
         },
     },
 ];
+
 export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
     callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
