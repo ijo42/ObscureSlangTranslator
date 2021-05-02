@@ -1,35 +1,25 @@
 import {
-    categorizeMarkup,
     collectTelemetry,
-    Command,
-    concreteTerm,
-    keyboardWithConfirmation,
-    moderateMarkup,
-    processReplenishment,
-    telemetryMarkup,
 } from "./templates";
 import { texts } from "./texts";
 import { bot } from "./app";
 import {
-    capitalize,
-    formatAnswer,
-    formatDBSize,
-    formatDuplicationCheck,
-    formatMention,
-    formatStatus,
-    formatTelemetry,
-    formatUserPromotion,
-    reformat,
+    BaseFormatting, TelegramFormatting,
 } from "./utils/formatting";
-import { eraseTerm, fuzzyFormat, fuzzySearch } from "./utils/fuzzySearch";
-import { registerCallback } from "./inLineHandler";
+import { eraseTerm, fuzzySearch } from "./utils/fuzzySearch";
 import { hasRights, promoteUser } from "./utils/moderate";
 import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
-import { sendPic } from "./utils/drawing";
 import TelegramBot from "node-telegram-bot-api";
 import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
-import { User } from "./db/interaction";
+import {
+    categorizeMarkup,
+    Command,
+    keyboardWithConfirmation, moderateMarkup,
+    processReplenishment, telemetryMarkup,
+} from "./telegram/templates";
+import { registerCallback } from "./telegram/inLineHandler";
+import { genPic } from "./utils/drawing";
 
 export const commands: Command[] = [
     {
@@ -38,7 +28,7 @@ export const commands: Command[] = [
         description: texts.commandsAround.size.desk,
         callback(msg: TelegramBot.Message): void {
             prisma.obscure.count()
-                .then(num => bot.sendMessage(msg.chat.id, formatDBSize(num)));
+                .then(num => bot.sendMessage(msg.chat.id, BaseFormatting.formatDBSize(num)));
         },
     },
 
@@ -53,13 +43,13 @@ export const commands: Command[] = [
             }
 
             function upload() {
-                processReplenishment(entry, <User>msg.from)
+                processReplenishment(entry, <TelegramBot.User>msg.from)
                     .then(() => bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
                     .catch(e => bot.sendMessage(msg.chat.id, e));
             }
             const chatId = msg.chat.id;
-            const vars: string[] = reformat(
-                capitalize([match[1], match[2]]),
+            const vars: string[] = BaseFormatting.reformat(
+                BaseFormatting.capitalize([match[1], match[2]]),
             );
             const fuzzy = fuzzySearch(vars);
             if (!(vars[0] && vars[1])) {
@@ -74,7 +64,7 @@ export const commands: Command[] = [
 
             if (fuzzy) {
                 const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
-                bot.sendMessage(chatId, formatDuplicationCheck(fuzzy), {
+                bot.sendMessage(chatId, BaseFormatting.formatDuplicationCheck(fuzzy), {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2",
                 })
@@ -95,7 +85,7 @@ export const commands: Command[] = [
         command: "/get",
         regexp: regexpBuild("get", baseRegexp.searchableExp),
         description: texts.commandsAround.get.desk,
-        callback: (msg, match) => bot.sendMessage(msg.chat.id, fuzzyFormat(match), {
+        callback: (msg, match) => bot.sendMessage(msg.chat.id, TelegramFormatting.fuzzyFormat(match), {
             parse_mode: "MarkdownV2",
         }),
     },
@@ -117,13 +107,13 @@ export const commands: Command[] = [
                             bot.sendMessage(msg.chat.id, texts.successfulPromoting);
                             bot.sendMessage(promotable.id, texts.promoteAnnounce)
                                 .catch(() => bot.sendMessage(msg.chat.id,
-                                    `${formatMention(promotable)}, ${
+                                    `${TelegramFormatting.formatMention(promotable)}, ${
                                         texts.promoteAnnounce}`));
 
                         })
                         .catch(e => bot.sendMessage(promoterId, e.stack)), "Promote", promoterId);
 
-                    bot.sendMessage(msg.chat.id, formatUserPromotion(texts.confirmPromotion, promotable), {
+                    bot.sendMessage(msg.chat.id, TelegramFormatting.formatUserPromotion(texts.confirmPromotion, promotable), {
                         reply_markup: keyboard,
                     })
                         .then(value => registerCallback(value, keyboard));
@@ -180,7 +170,7 @@ export const commands: Command[] = [
                         };
                         const keyboard = moderateMarkup(match, msg.from.id);
 
-                        bot.sendMessage(msg.chat.id, `Accept: ${formatAnswer(match)}`, {
+                        bot.sendMessage(msg.chat.id, `Accept: ${TelegramFormatting.formatAnswer(match)}`, {
                             parse_mode: "MarkdownV2",
                             reply_markup: keyboard,
                         })
@@ -197,7 +187,9 @@ export const commands: Command[] = [
         callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
             const entry = fuzzySearch(match);
             if (entry) {
-                sendPic(msg.chat.id, entry);
+                genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
+                    caption: BaseFormatting.formatAnswerUnpreceded(entry),
+                }));
                 requestTermFeedback(entry, msg);
             } else {
                 bot.sendMessage(msg.chat.id, "IDK");
@@ -238,7 +230,7 @@ export const commands: Command[] = [
                         .then(() => eraseTerm(obscureTerm))
                         .then(() => bot.sendMessage(msg.chat.id, "Successful"));
                 }, "Force", msg.from.id);
-                bot.sendMessage(msg.chat.id, concreteTerm(obscureTerm), {
+                bot.sendMessage(msg.chat.id, BaseFormatting.concreteTerm(obscureTerm), {
                     reply_markup: confirm,
                 })
                     .then(r => registerCallback(r, confirm));
@@ -257,7 +249,7 @@ export const commands: Command[] = [
                     .then(entry => {
                         if (msg.from && entry) {
                             const replyMarkup = telemetryMarkup(msg, msg.from.id);
-                            bot.sendMessage(msg.chat.id, formatTelemetry(entry), {
+                            bot.sendMessage(msg.chat.id, BaseFormatting.formatTelemetry(entry), {
                                 reply_markup: replyMarkup,
                             })
                                 .then(e => {
@@ -289,7 +281,7 @@ export const commands: Command[] = [
                             status: "waiting",
                         },
                     })
-                        .then(staging => bot.sendMessage(msg.chat.id, formatStatus(telemetry, staging))));
+                        .then(staging => bot.sendMessage(msg.chat.id, BaseFormatting.formatStatus(telemetry, staging))));
             } else {
                 bot.sendMessage(msg.chat.id, texts.hasNoRights);
             }
@@ -302,7 +294,9 @@ export const defaultCommand = {
         if (msg.from && msg.chat.type === "private" && msg.text && !msg.text.startsWith("/") && !msg.reply_to_message) {
             const entry = fuzzySearch(match);
             if (entry) {
-                sendPic(msg.chat.id, entry);
+                genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
+                    caption: BaseFormatting.formatAnswerUnpreceded(entry),
+                }));
                 requestTermFeedback(entry, msg, true);
             } else {
                 bot.sendMessage(msg.chat.id, "IDK");

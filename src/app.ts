@@ -4,8 +4,8 @@ import { commands, defaultCommand } from "./commands";
 import setupFuzzyCache from "./utils/fuzzySearch";
 import setupModerateCache from "./utils/moderate";
 import setupDrawing from "./utils/drawing";
-import { processInline, processQuery } from "./inLineHandler";
 import prisma from "./db";
+import { processInline, processQuery } from "./telegram/inLineHandler";
 
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";

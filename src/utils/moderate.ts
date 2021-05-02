@@ -3,7 +3,8 @@ import { bot } from "../app";
 import { texts } from "../texts";
 import { format } from "util";
 import prisma from "../db";
-import { User, userValidate } from "../db/interaction";
+import { User } from "node-telegram-bot-api";
+import { TelegramInteraction } from "../db/interaction";
 
 const moderators = new Map<number, number>();
 // TELEGRAM USER ID, MODERATOR ID
@@ -29,25 +30,31 @@ export default async function setup(): Promise<void> {
             id: true,
             users: true,
         },
-    }).then(val => val.forEach(usr => {
-        if(usr.users.telegram_id !== null) {
-            moderators.set(usr.users.telegram_id, usr.id);
-        }
-    }))
-        .then(() => firstStart());
+    }).then(val => {
+        val.forEach(usr => {
+            if (usr.users.telegram_id !== null) {
+                moderators.set(usr.users.telegram_id, usr.id);
+            }
+        });
+        firstStart();
+    });
 }
 
 export function hasRights(userId: number | undefined): number | undefined {
     return !userId ? undefined : moderators.get(userId);
 }
 
-export const promoteUser: (promotable: User, promoterId: number) => Promise<unknown> = (promotable: User, promoter: number) => prisma.moderators.create({
-    data: {
-        promoted_by: promoter,
-        users: userValidate(promotable),
-    },
-    select: {
-        id: true,
-        users: true,
-    },
-}).then(usr => moderators.set(<number>usr.users.telegram_id, usr.id));
+export function promoteUser(promotable: User, promoterId: number): Promise<void> {
+    return prisma.moderators.create({
+        data: {
+            promoted_by: promoterId,
+            users: TelegramInteraction.userValidate(promotable),
+        },
+        select: {
+            id: true,
+            users: true,
+        },
+    }).then(usr => {
+        moderators.set(<number>usr.users.telegram_id, usr.id);
+    });
+}

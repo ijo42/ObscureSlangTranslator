@@ -1,23 +1,18 @@
-import TelegramBot, {
-    CallbackQuery,
-    InlineQueryResultArticle,
-    InputTextMessageContent,
-    Message,
-} from "node-telegram-bot-api";
-import { Keyboard } from "./templates";
-import { hasRights } from "./utils/moderate";
-import { fuzzySearchWithLen } from "./utils/fuzzySearch";
+import TelegramBot from "node-telegram-bot-api";
+import { hasRights } from "../utils/moderate";
+import { fuzzySearchWithLen } from "../utils/fuzzySearch";
 import { randomInt } from "crypto";
-import { formatAnswer } from "./utils/formatting";
-import { bot } from "./app";
+import { bot } from "../app";
+import { Keyboard } from "./templates";
+import { TelegramFormatting } from "../utils/formatting";
 
 const registeredCallbacks = new Map<number, Keyboard>();
 
-export const registerCallback: (message: TelegramBot.Message, callback: Keyboard) => void = (message: Message, callback: Keyboard) => {
+export const registerCallback: (message: TelegramBot.Message, callback: Keyboard) => void = (message: TelegramBot.Message, callback: Keyboard) => {
     registeredCallbacks.set(message.message_id, callback);
 };
 
-export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: CallbackQuery) => {
+export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: TelegramBot.CallbackQuery) => {
     function restrictedKeyboardChecks(possibleKeyboard: Keyboard) {
         return !possibleKeyboard.restrictedTo || possibleKeyboard.restrictedTo === query.from.id ||
             possibleKeyboard.restrictedTo === true && hasRights(query.from.id);
@@ -44,12 +39,12 @@ export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: 
 };
 
 export function processInline(query: TelegramBot.InlineQuery): void {
-    bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value => <InlineQueryResultArticle>{
+    bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value => <TelegramBot.InlineQueryResultArticle>{
         type: "article",
         id: randomInt(10000).toString(),
         title: value.term,
-        input_message_content: <InputTextMessageContent>{
-            message_text: formatAnswer(value),
+        input_message_content: <TelegramBot.InputTextMessageContent>{
+            message_text: TelegramFormatting.formatAnswer(value),
             parse_mode: "MarkdownV2",
         },
     }));

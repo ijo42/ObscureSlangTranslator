@@ -1,8 +1,6 @@
 import Fuse from "fuse.js";
 import { ObscureEntry } from "../templates";
-import { formatAnswer } from "./formatting";
 import prisma from "../db";
-import { bot } from "../app";
 import { compiledRegexp } from "./regexpBuilder";
 
 const options = {
@@ -67,24 +65,14 @@ export const fuzzySearchWithLen: (query: (string[] | null), num: number) => Obsc
 
 export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined = (query: string[] | null) => fuzzySearchWithLen(query, 1)[0];
 
-export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
-    const entry = fuzzySearch(query);
-    return entry ? formatAnswer(entry) : "*IDK*";
-};
-
-export const findAndValidateTerm: (text: string, chatId: number) => (ObscureEntry | undefined) = (text: string, chatId: number) => {
+export const findAndValidateTerm: (text: string) => (ObscureEntry | undefined) = (text: string) => {
 
     if (!compiledRegexp.fullMatch.test(text)) {
         return;
     }
 
-    const fuzzy = fuzzySearch(text.replace(/(\s)?-(\s)?/, " ")
+    return fuzzySearch(text.replace(/(\s)?-(\s)?/, " ")
         .split(" "));
-    if (!fuzzy) {
-        bot.sendMessage(chatId, "I didn't find this term. Try to provide over inline-mode");
-    }
-
-    return fuzzy;
 };
 
 export const findAndValidateCategory: (text: string) => Promise<undefined | {

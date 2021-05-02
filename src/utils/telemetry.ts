@@ -1,10 +1,11 @@
-import { Keyboard, ObscureEntry } from "../templates";
+import { ObscureEntry } from "../templates";
 import { Message } from "node-telegram-bot-api";
 import { bot } from "../app";
-import { registerCallback } from "../inLineHandler";
 import prisma from "../db";
 import { texts } from "../texts";
-import { userValidate } from "../db/interaction";
+import { TelegramInteraction } from "../db/interaction";
+import { Keyboard } from "../telegram/templates";
+import { registerCallback } from "../telegram/inLineHandler";
 
 export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false): void {
     if (!originalMsg.from) {
@@ -13,7 +14,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
 
     prisma.telemetry.create({
         data: {
-            users: userValidate(originalMsg.from),
+            users: TelegramInteraction.userValidate(originalMsg.from),
             obscure: {
                 connect: {
                     id: term.id,
@@ -83,7 +84,7 @@ export function requestIDKFeedback(originalMsg: Message): void {
                             prisma.telemetry.create({
                                 data: {
                                     is_useful: false,
-                                    users: userValidate(originalMsg.from),
+                                    users: TelegramInteraction.userValidate(originalMsg.from),
                                     origin_message: originalMsg.text,
                                 },
                             }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));
