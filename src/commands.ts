@@ -6,7 +6,7 @@ import { bot } from "./app";
 import {
     BaseFormatting, TelegramFormatting,
 } from "./utils/formatting";
-import { eraseTerm, fuzzySearch } from "./utils/fuzzySearch";
+import { eraseTerm, fuseSearchWithLen, fuzzySearch } from "./utils/fuzzySearch";
 import { hasRights, promoteUser } from "./utils/moderate";
 import prisma from "./db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
@@ -51,7 +51,7 @@ export const commands: Command[] = [
             const vars: string[] = BaseFormatting.reformat(
                 BaseFormatting.capitalize([match[1], match[2]]),
             );
-            const fuzzy = fuzzySearch(vars);
+            const fuzzy = fuseSearchWithLen(vars, 1)[0];
             if (!(vars[0] && vars[1])) {
                 throw new Error("Empty term array");
             }
@@ -61,10 +61,11 @@ export const commands: Command[] = [
                 term: vars[0],
                 value: vars[1],
             };
-
-            if (fuzzy) {
+            if(fuzzy?.score && fuzzy.score <= 0.00001) {
+                bot.sendMessage(chatId, texts.duplicate);
+            } else if (fuzzy?.item) {
                 const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
-                bot.sendMessage(chatId, BaseFormatting.formatDuplicationCheck(fuzzy), {
+                bot.sendMessage(chatId, BaseFormatting.formatDuplicationCheck(fuzzy.item), {
                     reply_markup: keyboard,
                     parse_mode: "MarkdownV2",
                 })
