@@ -1,8 +1,6 @@
-import { bot } from "../app";
 import Jimp from "jimp";
-import { ObscureEntry } from "../templates";
 import { Font } from "@jimp/plugin-print";
-import { formatAnswerUnpreceded } from "./formatting";
+import { ObscureEntry } from "../templates";
 
 let template!: Jimp;
 let titleFont!: Font;
@@ -16,8 +14,8 @@ export default async function setup(): Promise<void> {
     await Jimp.create("resources/template.png").then(x => template = x);
 }
 
-export function sendPic(id: number | string, entry: ObscureEntry): void {
-    Jimp.create(template).then(image => {
+export function genPic(entry: ObscureEntry): Promise<Buffer> {
+    return Jimp.create(template).then(image => {
         image.print(titleFont, 0, image.getHeight() / 10, {
             text: entry.term,
             alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
@@ -34,8 +32,6 @@ export function sendPic(id: number | string, entry: ObscureEntry): void {
             text: `#${entry.id}`,
         }, image.getWidth());
 
-        image.getBufferAsync(Jimp.MIME_PNG).then(i => bot.sendPhoto(id, i, {
-            caption: formatAnswerUnpreceded(entry),
-        }));
+        return image.getBufferAsync(Jimp.MIME_PNG);
     });
 }
