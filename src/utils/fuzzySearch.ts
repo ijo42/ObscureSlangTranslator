@@ -59,32 +59,32 @@ export function eraseTerm(term: ObscureEntry): void {
     fuse.remove((doc: ObscureEntry) => term === doc);
 }
 
-export const fuzzySearchWithLen: (query: (string[] | null), num: number) => ObscureEntry[] = (query: string[] | null, num: number) => query ? fuse.search(query.join(" | "))
-    .slice(0, num)
-    .map(value => value.item) : [];
+export function fuzzySearchWithLen(query: (string[] | null), num: number): ObscureEntry[] {
+    return query ? fuse.search(query.join(" | ")).slice(0, num)
+        .map(value => value.item) : [];
+}
 
-export const fuzzySearch: (query: (string[] | null)) => ObscureEntry | undefined = (query: string[] | null) => fuzzySearchWithLen(query, 1)[0];
+export function fuzzySearch(query: (string[] | null)): ObscureEntry | undefined {
+    return fuzzySearchWithLen(query, 1)[0];
+}
 
-export const findAndValidateTerm: (text: string) => (ObscureEntry | undefined) = (text: string) => {
-
+export function findAndValidateTerm(text: string): (ObscureEntry | undefined) {
     if (!compiledRegexp.fullMatch.test(text)) {
         return;
     }
 
     return fuzzySearch(text.replace(/(\s)?-(\s)?/, " ")
         .split(" "));
-};
+}
 
-export const findAndValidateCategory: (text: string) => Promise<undefined | {
+export function findAndValidateCategory(text: string):Promise<null | {
     value: string;
     id: number;
-}> = async (text: string) => {
-
+}> {
     if (!compiledRegexp.categoryDef.test(text)) {
-        return;
+        return Promise.resolve(null);
     }
-    let k;
-    await prisma.categories.findFirst({
+    return prisma.categories.findFirst({
         where: {
             value: text,
         },
@@ -92,13 +92,14 @@ export const findAndValidateCategory: (text: string) => Promise<undefined | {
             value: true,
             id: true,
         },
-    }).then(e => k = e);
-    return k;
-};
+    });
+}
 
-export const findByIds: (ids: number[]) => (ObscureEntry | undefined)[] = (ids: number[]) => ids.map(termId => fuse.search({
-    id: termId.toString(),
-}, {
-    limit: 1,
-}))
-    .map(e => e[0]?.item);
+export function findByIds(ids: number[]): (ObscureEntry | undefined)[] {
+    return ids.map(termId => fuse.search({
+        id: termId.toString(),
+    }, {
+        limit: 1,
+    }))
+        .map(e => e[0]?.item);
+}
