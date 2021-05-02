@@ -42,6 +42,7 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                             data: {
                                 is_useful: true,
                             },
+                            select: {},
                         }).then(() => bot.sendMessage(originalMsg.chat.id, texts.thx)),
                     },
                     {
