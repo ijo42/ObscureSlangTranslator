@@ -71,4 +71,5 @@ export const texts = {
     success: "Успешно",
     terms: "терминов",
     telemetry: "вхождений телеметрии",
+    duplicate: "Этот термин является полным дубликатом",
 };

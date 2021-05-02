@@ -38,15 +38,7 @@ export default async function setup(): Promise<void> {
 }
 
 export function pushTerm(term: ObscureEntry): void {
-    const fuzzy = fuse.search({
-        term: term.term,
-        value: term.value,
-    })[0];
-    if (fuzzy && fuzzy.score === 0.0) {
-        throw new Error("Duplicate key");
-    } else {
-        fuse.add(term);
-    }
+    fuse.add(term);
 }
 
 export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => void): void {
@@ -59,9 +51,13 @@ export function eraseTerm(term: ObscureEntry): void {
     fuse.remove((doc: ObscureEntry) => term === doc);
 }
 
+export function fuseSearchWithLen(query: (string[] | null), num: number): Fuse.FuseResult<ObscureEntry>[] {
+    return query ? fuse.search(query.join(" | ")).slice(0, num) : [];
+}
+
 export function fuzzySearchWithLen(query: (string[] | null), num: number): ObscureEntry[] {
-    return query ? fuse.search(query.join(" | ")).slice(0, num)
-        .map(value => value.item) : [];
+    return fuseSearchWithLen(query, num)
+        .map(value => value.item);
 }
 
 export function fuzzySearch(query: (string[] | null)): ObscureEntry | undefined {
