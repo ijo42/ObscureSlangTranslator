@@ -28,7 +28,11 @@ export default async function setup(): Promise<void> {
     await prisma.moderators.findMany({
         select: {
             id: true,
-            users: true,
+            users: {
+                select: {
+                    telegram_id: true,
+                },
+            },
         },
     }).then(val => {
         val.forEach(usr => {
@@ -44,10 +48,10 @@ export function hasRights(userId: number | undefined): number | undefined {
     return !userId ? undefined : moderators.get(userId);
 }
 
-export function promoteUser(promotable: User, promoterId: number): Promise<void> {
+export function promoteUser(promotable: User, promoted_by: number): Promise<void> {
     return prisma.moderators.create({
         data: {
-            promoted_by: promoterId,
+            promoted_by,
             users: TelegramInteraction.userValidate(promotable),
         },
         select: {

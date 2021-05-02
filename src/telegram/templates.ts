@@ -111,7 +111,7 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: "ACCEPT",
                     callback_data: "A",
                     callback() {
-                        return processReplenishment(match, match.author, false)
+                        processReplenishment(match, match.author, false)
                             .then(acceptedAs => prisma.staging.update({
                                 where: {
                                     id: match.stagingId,
@@ -120,9 +120,10 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                     status: "accepted",
                                     reviewed_by: hasRights(match.reviewer),
                                     accepted_as: acceptedAs.id,
-                                    updated: new Date(),
                                 },
-                                select: {},
+                                select: {
+                                    id: true,
+                                },
                             })
                                 .then(() => {
                                     bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.acceptedNotify);
@@ -137,16 +138,17 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: "DECLINE",
                     callback_data: "D",
                     callback() {
-                        return prisma.staging.update({
+                        prisma.staging.update({
                             where: {
                                 id: match.stagingId,
                             },
                             data: {
                                 status: "declined",
                                 reviewed_by: hasRights(match.reviewer),
-                                updated: new Date(),
                             },
-                            select: {},
+                            select: {
+                                id: true,
+                            },
                         })
                             .then(() => {
                                 bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.declinedNotify);
@@ -163,16 +165,17 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: "REQUEST CHANGES",
                     callback_data: "R",
                     callback() {
-                        return prisma.staging.update({
+                        prisma.staging.update({
                             where: {
                                 id: match.stagingId,
                             },
                             data: {
                                 status: "request_changes",
                                 reviewed_by: hasRights(match.reviewer),
-                                updated: new Date(),
                             },
-                            select: {},
+                            select: {
+                                id: true,
+                            },
                         })
                             .then(() => {
                                 bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.requestNotify);
@@ -198,17 +201,17 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                         }
 
                         const callback: (originEntry: ObscureEntry) => void = (originEntry: ObscureEntry) => {
-                            Promise.race([
+                            Promise.all([
                                 prisma.obscure.update({
-                                    where: {
-                                        id: originEntry.id,
-                                    },
+                                    where: originEntry,
                                     data: {
                                         synonyms: {
                                             push: match.term,
                                         },
                                     },
-                                    select: {},
+                                    select: {
+                                        id: true,
+                                    },
                                 }),
                                 prisma.staging.update({
                                     where: {
@@ -218,9 +221,10 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                         status: "synonym",
                                         reviewed_by: hasRights(match.reviewer),
                                         accepted_as: originEntry.id,
-                                        updated: new Date(),
                                     },
-                                    select: {},
+                                    select: {
+                                        id: true,
+                                    },
                                 }),
                             ])
                                 .then(() => {
@@ -310,25 +314,28 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                 },
                                 data: {
                                     categories: {
-                                        connect: { id: providedCategory.id },
+                                        connect: providedCategory,
                                     },
                                 },
-                                select: {},
+                                select: {
+                                    id: true,
+                                },
                             })
                                 .then(() => bot.sendMessage(chatId, "Successful linked", { reply_markup: { remove_keyboard: true } }));
 
                         function processCategoryDefinition(categoryProvidedMsg: TelegramBot.Message, listenId: number, providedTerm: ObscureEntry) {
                             if (categoryProvidedMsg.from && hasRights(categoryProvidedMsg.from.id) && categoryProvidedMsg.text && compiledRegexp.categoryDef.test(categoryProvidedMsg.text)) {
-                                return findAndValidateCategory(categoryProvidedMsg.text)
-                                    .then(providedCategory => {
+                                findAndValidateCategory(categoryProvidedMsg.text)
+                                    ?.then(providedCategory => {
                                         if (!providedCategory) {
-                                            return bot.sendMessage(chatId, "I didn't find this category");
+                                            bot.sendMessage(chatId, "I didn't find this category");
+                                            return;
                                         }
                                         bot.removeReplyListener(listenId);
-                                        return precessLinkage(providedTerm, providedCategory);
+                                        precessLinkage(providedTerm, providedCategory);
                                     });
                             } else {
-                                return bot.sendMessage(chatId, texts.hasNoRights);
+                                bot.sendMessage(chatId, texts.hasNoRights);
                             }
                         }
 
@@ -356,7 +363,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                         }
 
                         function requestTerm(obscureKeyboard: TelegramBot.ReplyKeyboardMarkup) {
-                            return bot.sendMessage(chatId, "Reply to this message w/ term. May provide over in-line", {
+                            bot.sendMessage(chatId, "Reply to this message w/ term. May provide over in-line", {
                                 reply_markup: obscureKeyboard,
                             })
                                 .then(termProvideMsg => {
@@ -431,7 +438,9 @@ export function telemetryMarkup(message: TelegramBot.Message, restrictedTo: numb
                                     moderated_by: hasRights(restrictedTo),
                                     moderated_at: new Date(),
                                 },
-                                select: {},
+                                select: {
+                                    id: true,
+                                },
                             })
                                 .then(() => bot.sendMessage(message.chat.id, texts.success));
                         }

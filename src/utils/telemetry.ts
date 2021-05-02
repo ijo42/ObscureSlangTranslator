@@ -36,25 +36,26 @@ export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, fe
                         text: `${texts.binary.yes}!`,
                         callback_data: "Y",
                         callback: () => prisma.telemetry.update({
-                            where: {
-                                id: e.id,
-                            },
+                            where: e,
                             data: {
                                 is_useful: true,
                             },
-                            select: {},
+                            select: {
+                                id: true,
+                            },
                         }).then(() => bot.sendMessage(originalMsg.chat.id, texts.thx)),
                     },
                     {
                         text: texts.binary.no,
                         callback_data: "N",
                         callback: () => prisma.telemetry.update({
-                            where: {
-                                id: e.id,
-                            },
+                            where: e,
                             data: {
                                 is_useful: false,
                                 origin_message: originalMsg.text,
+                            },
+                            select: {
+                                id: true,
                             },
                         }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise)),
                     },
@@ -87,6 +88,9 @@ export function requestIDKFeedback(originalMsg: Message): void {
                                     is_useful: false,
                                     users: TelegramInteraction.userValidate(originalMsg.from),
                                     origin_message: originalMsg.text,
+                                },
+                                select: {
+                                    id: true,
                                 },
                             }).then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise));
                         }
