@@ -1,10 +1,55 @@
+import { texts } from "../texts";
+import setupModerateCache, { hasRights } from "./moderate";
+import { commands, defaultCommand } from "./commands";
 import TelegramBot from "node-telegram-bot-api";
-import { hasRights } from "../utils/moderate";
+import { Keyboard } from "./templates";
 import { fuzzySearchWithLen } from "../utils/fuzzySearch";
 import { randomInt } from "crypto";
-import { bot } from "../app";
-import { Keyboard } from "./templates";
 import { TelegramFormatting } from "../utils/formatting";
+
+const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
+export const bot = new TelegramBot(token, { polling: true });
+
+export default async function app(): Promise<void> {
+    await setupModerateCache();
+
+    bot.on("new_chat_members", msg => {
+        bot.sendMessage(msg.chat.id, texts.welcome);
+    });
+
+    bot.on("polling_error", error => {
+        console.log(JSON.stringify(error));  // => 'EFATAL'
+    });
+
+    bot.on("callback_query", query => {
+        if (query.message) {
+            processQuery(query);
+        }
+    });
+
+    bot.on("inline_query", query => processInline(query));
+
+    commands.forEach(command => {
+        bot.onText(command.regexp, command.callback);
+    });
+
+    bot.onText(defaultCommand.regexp, defaultCommand.callback);
+
+    await bot.setMyCommands(commands);
+
+    console.log(`Registered ${commands.length} commands`);
+    bot.getMe().then(value => {
+        if (value.username) {
+            console.log(`Bot: https://t.me/${value.username}`);
+        }
+    });
+
+    console.log("Bot setup successful");
+}
+
+export function terminate(): Promise<void> {
+    return bot.stopPolling();
+}
 
 const registeredCallbacks = new Map<number, Keyboard>();
 

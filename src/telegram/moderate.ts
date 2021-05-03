@@ -1,10 +1,10 @@
-import { randomString } from "./formatting";
-import { bot } from "../app";
+import { randomString } from "../utils/formatting";
 import { texts } from "../texts";
 import { format } from "util";
 import prisma from "../db";
 import { User } from "node-telegram-bot-api";
 import { TelegramInteraction } from "../db/interaction";
+import { bot } from "./bot";
 
 const moderators = new Map<number, number>();
 // TELEGRAM USER ID, MODERATOR ID

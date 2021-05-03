@@ -1,5 +1,4 @@
 import TelegramBot from "node-telegram-bot-api";
-import { bot } from "../app";
 import {
     editTerm,
     findAndValidateCategory,
@@ -12,11 +11,11 @@ import { BaseFormatting, TelegramFormatting } from "../utils/formatting";
 import { texts } from "../texts";
 import { format } from "util";
 import prisma from "../db";
-import { registerCallback } from "./inLineHandler";
-import { hasRights } from "../utils/moderate";
+import { hasRights } from "./moderate";
 import { compiledRegexp } from "../utils/regexpBuilder";
 import { collectTelemetry, ObscureEntry } from "../templates";
 import { TelegramInteraction } from "../db/interaction";
+import { bot, registerCallback } from "./bot";
 
 export interface Command extends TelegramBot.BotCommand {
     regexp: RegExp;
