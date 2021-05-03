@@ -1,25 +1,24 @@
 import {
     collectTelemetry,
-} from "./templates";
-import { texts } from "./texts";
-import { bot } from "./app";
+} from "../templates";
+import { texts } from "../texts";
 import {
     BaseFormatting, TelegramFormatting,
-} from "./utils/formatting";
-import { eraseTerm, fuseSearchWithLen, fuzzySearch } from "./utils/fuzzySearch";
-import { hasRights, promoteUser } from "./utils/moderate";
-import prisma from "./db";
-import regexpBuild, { baseRegexp, compiledRegexp } from "./utils/regexpBuilder";
+} from "../utils/formatting";
+import { eraseTerm, fuseSearchWithLen, fuzzySearch } from "../utils/fuzzySearch";
+import prisma from "../db";
+import regexpBuild, { baseRegexp, compiledRegexp } from "../utils/regexpBuilder";
 import TelegramBot from "node-telegram-bot-api";
-import { requestIDKFeedback, requestTermFeedback } from "./utils/telemetry";
+import { requestIDKFeedback, requestTermFeedback } from "./telemetry";
 import {
     categorizeMarkup,
     Command,
     keyboardWithConfirmation, moderateMarkup,
     processReplenishment, telemetryMarkup,
-} from "./telegram/templates";
-import { registerCallback } from "./telegram/inLineHandler";
-import { genPic } from "./utils/drawing";
+} from "./templates";
+import { genPic } from "../utils/drawing";
+import { bot, registerCallback } from "./bot";
+import { hasRights, promoteUser } from "./moderate";
 
 export const commands: Command[] = [
     {
