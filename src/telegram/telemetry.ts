@@ -1,11 +1,11 @@
-import { ObscureEntry } from "../templates";
 import { Message } from "node-telegram-bot-api";
 import { texts } from "../texts";
 import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
 import { Keyboard } from "./templates";
 import { bot, registerCallback } from "./bot";
+import { obscure } from "@prisma/client";
 
-export function requestTermFeedback(term: ObscureEntry, originalMsg: Message, feedbackRequested = false): void {
+export function requestTermFeedback(term: obscure, originalMsg: Message, feedbackRequested = false): void {
     if (!originalMsg.from) {
         return;
     }

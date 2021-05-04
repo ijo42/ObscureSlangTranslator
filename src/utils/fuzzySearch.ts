@@ -1,7 +1,8 @@
+import { obscure } from "@prisma/client";
 import Fuse from "fuse.js";
-import { ObscureEntry } from "../templates";
 import prisma from "../db";
 import { compiledRegexp } from "./regexpBuilder";
+import { TermInteraction } from "../db/interaction";
 
 const options = {
     includeScore: true,
@@ -23,7 +24,7 @@ const options = {
     ],
 };
 
-const fuse: Fuse<ObscureEntry> = new Fuse([], options);
+const fuse: Fuse<obscure> = new Fuse([], options);
 
 export default async function setup(): Promise<void> {
     await prisma.obscure.findMany({
@@ -37,34 +38,34 @@ export default async function setup(): Promise<void> {
         .then(val => fuse.setCollection(val));
 }
 
-export function pushTerm(term: ObscureEntry): void {
+export function pushTerm(term: obscure): void {
     fuse.add(term);
 }
 
-export function editTerm(term: ObscureEntry, operation: (t: ObscureEntry) => void): void {
-    fuse.remove((doc: ObscureEntry) => term === doc);
+export function editTerm(term: obscure, operation: (t: obscure) => void): void {
+    fuse.remove((doc: obscure) => term === doc);
     operation(term);
     fuse.add(term);
 }
 
-export function eraseTerm(term: ObscureEntry): void {
-    fuse.remove((doc: ObscureEntry) => term === doc);
+export function eraseTerm(term: obscure): void {
+    fuse.remove((doc: obscure) => term === doc);
 }
 
-export function fuseSearchWithLen(query: (string[] | null), num: number): Fuse.FuseResult<ObscureEntry>[] {
+export function fuseSearchWithLen(query: (string[] | null), num: number): Fuse.FuseResult<obscure>[] {
     return query ? fuse.search(query.join(" | ")).slice(0, num) : [];
 }
 
-export function fuzzySearchWithLen(query: (string[] | null), num: number): ObscureEntry[] {
+export function fuzzySearchWithLen(query: (string[] | null), num: number): obscure[] {
     return fuseSearchWithLen(query, num)
         .map(value => value.item);
 }
 
-export function fuzzySearch(query: (string[] | null)): ObscureEntry | undefined {
+export function fuzzySearch(query: (string[] | null)): obscure | undefined {
     return fuzzySearchWithLen(query, 1)[0];
 }
 
-export function findAndValidateTerm(text: string): (ObscureEntry | undefined) {
+export function findAndValidateTerm(text: string): (obscure | undefined) {
     if (!compiledRegexp.fullMatch.test(text)) {
         return;
     }
@@ -91,11 +92,16 @@ export function findAndValidateCategory(text: string):Promise<null | {
     });
 }
 
-export function findByIds(ids: number[]): (ObscureEntry | undefined)[] {
+export function findByIds(ids: number[]): (obscure | undefined)[] {
     return ids.map(termId => fuse.search({
         id: termId.toString(),
     }, {
         limit: 1,
     }))
         .map(e => e[0]?.item);
+}
+
+export function deleteTerm(obscureTerm: obscure): Promise<void> {
+    return TermInteraction.deleteTerm(obscureTerm)
+        .then(() => eraseTerm(obscureTerm));
 }

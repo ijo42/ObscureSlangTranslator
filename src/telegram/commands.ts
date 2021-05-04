@@ -1,11 +1,12 @@
-import {
-    collectTelemetry,
-} from "../templates";
 import { texts } from "../texts";
 import {
     BaseFormatting, TelegramFormatting,
 } from "../utils/formatting";
-import { eraseTerm, fuseSearchWithLen, fuzzySearch } from "../utils/fuzzySearch";
+import {
+    deleteTerm,
+    fuseSearchWithLen,
+    fuzzySearch,
+} from "../utils/fuzzySearch";
 import prisma from "../db";
 import regexpBuild, { baseRegexp, compiledRegexp } from "../utils/regexpBuilder";
 import TelegramBot from "node-telegram-bot-api";
@@ -19,6 +20,9 @@ import {
 import { genPic } from "../utils/drawing";
 import { bot, registerCallback } from "./bot";
 import { hasRights, promoteUser } from "./moderate";
+import { StagingInteraction, TelemetryInteraction } from "../db/interaction";
+import getStaging = StagingInteraction.getStaging;
+import collectTelemetry = TelemetryInteraction.collectTelemetry;
 
 export const commands: Command[] = [
     {
@@ -135,18 +139,7 @@ export const commands: Command[] = [
             if (!msg.from || !hasRights(msg.from?.id)) {
                 bot.sendMessage(msg.chat.id, texts.hasNoRights);
             } else {
-                prisma.staging.findFirst({
-                    take: 1,
-                    where: {
-                        status: "waiting",
-                    },
-                    select: {
-                        id: true,
-                        value: true,
-                        term: true,
-                        users: true,
-                    },
-                })
+                getStaging()
                     .then(res => {
                         if (!res) {
                             bot.sendMessage(msg.chat.id, texts.noStaging);
@@ -222,13 +215,7 @@ export const commands: Command[] = [
                 }
                 const confirm = keyboardWithConfirmation(() => {
                     console.log(`Deleted term ${JSON.stringify(obscureTerm)}`);
-                    prisma.obscure.delete({
-                        where: {
-                            id: obscureTerm.id,
-                        },
-                        select: {},
-                    })
-                        .then(() => eraseTerm(obscureTerm))
+                    deleteTerm(obscureTerm)
                         .then(() => bot.sendMessage(msg.chat.id, "Successful"));
                 }, "Force", msg.from.id);
                 bot.sendMessage(msg.chat.id, BaseFormatting.concreteTerm(obscureTerm), {
