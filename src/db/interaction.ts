@@ -1,15 +1,14 @@
 import prisma from "./index";
-import { ObscureEntry } from "../templates";
 import { TelegramFormatting } from "../utils/formatting";
-import { Prisma } from "@prisma/client";
+import { obscure, Prisma, users } from "@prisma/client";
 
 export namespace TelegramInteraction {
 
-    export function pushStaging(entry: ObscureEntry, user: User): Promise<{ id: number }> {
+    export function pushStaging(entry: obscure, user: User): Promise<{ id: number }> {
         return TermInteraction.pushStaging(entry, userValidate(user));
     }
 
-    export function pushEntry(entry: ObscureEntry): Promise<{ id: number }> {
+    export function pushEntry(entry: obscure): Promise<{ id: number }> {
         return TermInteraction.pushEntry(entry);
     }
 
@@ -27,7 +26,7 @@ export namespace TelegramInteraction {
         };
     }
 
-    export function termFeedback(connectedTerm: ObscureEntry, user: User): Promise<{ id: number }> {
+    export function termFeedback(connectedTerm: obscure, user: User): Promise<{ id: number }> {
         return TelemetryInteraction.termFeedback(connectedTerm, userValidate(user));
     }
 
@@ -55,7 +54,7 @@ export namespace TelegramInteraction {
 
 export namespace TermInteraction {
 
-    export function pushStaging(entry: ObscureEntry, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
+    export function pushStaging(entry: obscure, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
         return prisma.staging.create({
             data: {
                 term: entry.term,
@@ -68,7 +67,7 @@ export namespace TermInteraction {
         });
     }
 
-    export function pushEntry(entry: ObscureEntry): Promise<{ id: number }> {
+    export function pushEntry(entry: obscure): Promise<{ id: number }> {
         return prisma.obscure.create({
             data: {
                 term: entry.term,
@@ -79,11 +78,18 @@ export namespace TermInteraction {
             },
         });
     }
+
+    export function deleteTerm(obscureTerm: obscure): Promise<Record<string, never>> {
+        return prisma.obscure.delete({
+            where: obscureTerm,
+            select: {},
+        });
+    }
 }
 
 export namespace TelemetryInteraction {
 
-    export function termFeedback(connectedTerm: ObscureEntry, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
+    export function termFeedback(connectedTerm: obscure, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
         return prisma.telemetry.create({
             data: {
                 users: user,
@@ -133,6 +139,44 @@ export namespace TelemetryInteraction {
             },
             select: {
                 id: true,
+            },
+        });
+    }
+
+    export function collectTelemetry(uID?: number): Promise<{ id: number; obscure: obscure | null; is_useful: boolean | null; origin_message: string | null; } | null> {
+        return prisma.telemetry.findFirst({
+            where: {
+                moderated_by: null,
+                is_useful: false,
+            },
+            select: {
+                id: true,
+                is_useful: true,
+                origin_message: true,
+                obscure: true,
+            },
+            skip: uID ? 1 : undefined,
+            cursor: uID ? {
+                id: uID,
+            } : undefined,
+        });
+    }
+
+}
+
+export namespace StagingInteraction {
+
+    export function getStaging(): Promise<{ id: number; term: string; value: string; users: users; } | null> {
+        return prisma.staging.findFirst({
+            take: 1,
+            where: {
+                status: "waiting",
+            },
+            select: {
+                id: true,
+                value: true,
+                term: true,
+                users: true,
             },
         });
     }

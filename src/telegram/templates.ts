@@ -13,9 +13,10 @@ import { format } from "util";
 import prisma from "../db";
 import { hasRights } from "./moderate";
 import { compiledRegexp } from "../utils/regexpBuilder";
-import { collectTelemetry, ObscureEntry } from "../templates";
-import { TelegramInteraction } from "../db/interaction";
+import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
 import { bot, registerCallback } from "./bot";
+import { obscure } from "@prisma/client";
+import collectTelemetry = TelemetryInteraction.collectTelemetry;
 
 export interface Command extends TelegramBot.BotCommand {
     regexp: RegExp;
@@ -24,7 +25,7 @@ export interface Command extends TelegramBot.BotCommand {
     callback: ((msg: TelegramBot.Message, match: RegExpExecArray | null) => void)
 }
 
-export interface ModerateAction extends ObscureEntry {
+export interface ModerateAction extends obscure {
     stagingId: number;
     author: TelegramInteraction.User;
     reviewer: number;
@@ -54,7 +55,7 @@ function processCategory(msg: string, author: TelegramInteraction.User): Promise
         .then(r => r.value);
 }
 
-export async function processReplenishment(entry: ObscureEntry, author: TelegramInteraction.User, staging = true): Promise<ObscureEntry> {
+export async function processReplenishment(entry: obscure, author: TelegramInteraction.User, staging = true): Promise<obscure> {
     if (staging) {
         await TelegramInteraction.pushStaging(entry, author)
             .then(val => {
@@ -194,12 +195,12 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                                 [entry.term, entry.value], 3,
                             )
                                 .filter(value => !!value.value)
-                                .map((value: ObscureEntry) => BaseFormatting.formatAnswerUnpreceded(value));
+                                .map((value: obscure) => BaseFormatting.formatAnswerUnpreceded(value));
 
                             return genNStringMarkup(matchedEnters);
                         }
 
-                        const callback: (originEntry: ObscureEntry) => void = (originEntry: ObscureEntry) => {
+                        const callback: (originEntry: obscure) => void = (originEntry: obscure) => {
                             Promise.all([
                                 prisma.obscure.update({
                                     where: originEntry,
@@ -305,9 +306,9 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             })
                                 .then(i => genNStringMarkup(findByIds(i.map(e => e.id))
                                     .filter(e => !!e)
-                                    .map(e => BaseFormatting.formatAnswerUnpreceded(<ObscureEntry>e)))),
+                                    .map(e => BaseFormatting.formatAnswerUnpreceded(<obscure>e)))),
 
-                            precessLinkage = (providedTerm: ObscureEntry, providedCategory: { id: number }) => prisma.obscure.update({
+                            precessLinkage = (providedTerm: obscure, providedCategory: { id: number }) => prisma.obscure.update({
                                 where: {
                                     id: providedTerm.id,
                                 },
@@ -322,7 +323,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             })
                                 .then(() => bot.sendMessage(chatId, "Successful linked", { reply_markup: { remove_keyboard: true } }));
 
-                        function processCategoryDefinition(categoryProvidedMsg: TelegramBot.Message, listenId: number, providedTerm: ObscureEntry) {
+                        function processCategoryDefinition(categoryProvidedMsg: TelegramBot.Message, listenId: number, providedTerm: obscure) {
                             if (categoryProvidedMsg.from && hasRights(categoryProvidedMsg.from.id) && categoryProvidedMsg.text && compiledRegexp.categoryDef.test(categoryProvidedMsg.text)) {
                                 findAndValidateCategory(categoryProvidedMsg.text)
                                     ?.then(providedCategory => {
@@ -338,7 +339,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             }
                         }
 
-                        function requestCategory(providedTerm: ObscureEntry) {
+                        function requestCategory(providedTerm: obscure) {
                             return genCategoryKeyboard()
                                 .then(categoriesKeyboard => bot.sendMessage(chatId, "Reply to this message w/ category name", {
                                     reply_markup: categoriesKeyboard,
@@ -380,20 +381,20 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
     };
 }
 
-export function telemetryMarkup(message: TelegramBot.Message, restrictedTo: number, reset = false): Keyboard {
-    function forward(id: number, query: { message: { from?: TelegramBot.User, chat: TelegramBot.Chat, message_id: number } }) {
+export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo: number, reset = false): Keyboard {
+    function forward(id: number, message: { from?: TelegramBot.User, chat: TelegramBot.Chat, message_id: number }) {
         collectTelemetry(reset || id < 0 ? undefined : id)
             .then(entry => {
-                if (query.message && message.from) {
-                    const replyMarkup = telemetryMarkup(message, message.from.id, !entry);
+                if (message && originMessage.from) {
+                    const replyMarkup = telemetryMarkup(originMessage, originMessage.from.id, !entry);
                     bot.editMessageText(entry ? BaseFormatting.formatTelemetry(entry) : texts.telemetryModerate.noWaiting, {
-                        chat_id: query.message.chat.id,
-                        message_id: query.message.message_id,
+                        chat_id: message.chat.id,
+                        message_id: message.message_id,
                         reply_markup: replyMarkup,
                     })
                         .then(e => registerCallback(<TelegramBot.Message>e, replyMarkup));
                 } else {
-                    bot.sendMessage(message.chat.id, texts.telemetryModerate.noWaiting);
+                    bot.sendMessage(originMessage.chat.id, texts.telemetryModerate.noWaiting);
                 }
             });
     }
@@ -407,11 +408,9 @@ export function telemetryMarkup(message: TelegramBot.Message, restrictedTo: numb
                     callback: query => {
                         if (query.message && query.message.text) {
                             forward(BaseFormatting.grabUsrID(query.message.text), {
-                                message: {
-                                    from: query.message.from,
-                                    chat: query.message.chat,
-                                    message_id: query.message.message_id,
-                                },
+                                from: query.message.from,
+                                chat: query.message.chat,
+                                message_id: query.message.message_id,
                             });
                         }
                     },
@@ -422,13 +421,12 @@ export function telemetryMarkup(message: TelegramBot.Message, restrictedTo: numb
                     callback: query => {
                         let id;
                         if (query.message && query.message.text && (id = BaseFormatting.grabUsrID(query.message.text)) !== 0) {
-                            forward(BaseFormatting.grabUsrID(query.message.text), {
-                                message: {
+                            forward(BaseFormatting.grabUsrID(query.message.text), 
+                                {
                                     from: query.message.from,
                                     chat: query.message.chat,
                                     message_id: query.message.message_id,
-                                },
-                            });
+                                });
                             prisma.telemetry.update({
                                 where: {
                                     id,
@@ -441,7 +439,7 @@ export function telemetryMarkup(message: TelegramBot.Message, restrictedTo: numb
                                     id: true,
                                 },
                             })
-                                .then(() => bot.sendMessage(message.chat.id, texts.success));
+                                .then(() => bot.sendMessage(originMessage.chat.id, texts.success));
                         }
                     },
                 },

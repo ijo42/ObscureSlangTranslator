@@ -1,9 +1,9 @@
 import * as util from "util";
-import { ObscureEntry } from "../templates";
 import { texts } from "../texts";
 import { randomBytes } from "crypto";
 import { TelegramInteraction } from "../db/interaction";
 import { fuzzySearch } from "./fuzzySearch";
+import { obscure } from "@prisma/client";
 
 export namespace TelegramFormatting {
 
@@ -20,8 +20,8 @@ export namespace TelegramFormatting {
     export const precedeChar: (s: string) => string =
         (s: string) => s.replace(/([_\][)(~>#+\-=|}{.!])/gm, "\\$1");
 
-    export const formatAnswer: (entry: ObscureEntry) => string =
-        (entry: ObscureEntry) => precedeChar(BaseFormatting.formatAnswerUnpreceded(entry));
+    export const formatAnswer: (entry: obscure) => string =
+        (entry: obscure) => precedeChar(BaseFormatting.formatAnswerUnpreceded(entry));
 
     export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
         const entry = fuzzySearch(query);
@@ -32,8 +32,8 @@ export namespace TelegramFormatting {
 
 export namespace BaseFormatting {
 
-    export const formatAnswerUnpreceded: (entry: ObscureEntry) => string =
-        (entry: ObscureEntry) => `${entry.term} - ${entry.value}`;
+    export const formatAnswerUnpreceded: (entry: obscure) => string =
+        (entry: obscure) => `${entry.term} - ${entry.value}`;
 
     export const capitalizeFirstLetter: ([...rest]: string) => string =
         ([...rest]) => rest.shift()
@@ -56,7 +56,7 @@ ${texts.awaitedModerating}: ${telemetryEntry} ${texts.telemetry}`;
     }
 
     export function formatTelemetry(entry: {
-        obscure: ObscureEntry | null;
+        obscure: obscure | null;
         id: number;
         is_useful: boolean | null;
         origin_message: string | null
@@ -70,8 +70,8 @@ ${texts.telemetryModerate.botAnswer}: ${entry.obscure?.term}`;
     export const formatDBSize: (s: (string | number)) => string =
         (s: string | number) => util.format(texts.dbSize, s.toString());
 
-    export const formatDuplicationCheck: (entry: ObscureEntry) => string =
-        (entry: ObscureEntry) => util.format(texts.duplicationCheck, TelegramFormatting.formatAnswer(entry));
+    export const formatDuplicationCheck: (entry: obscure) => string =
+        (entry: obscure) => util.format(texts.duplicationCheck, TelegramFormatting.formatAnswer(entry));
 
     export const reformatStr: (s: string) => string = (s: string) => s.replace("_", " ")
         .replace(/ {2,}/g, " ")
@@ -79,7 +79,7 @@ ${texts.telemetryModerate.botAnswer}: ${entry.obscure?.term}`;
 
     export const reformat: ([...st]: readonly any[]) => any = ([...st]) => st.map(str => reformatStr(str));
 
-    export function concreteTerm(item: ObscureEntry): string {
+    export function concreteTerm(item: obscure): string {
         return `Term: ${item.term}
 Definition: ${item.value}
 Id: ${item.id}`;
