@@ -16,7 +16,6 @@ import { compiledRegexp } from "../utils/regexpBuilder";
 import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
-import collectTelemetry = TelemetryInteraction.collectTelemetry;
 
 export interface Command extends TelegramBot.BotCommand {
     regexp: RegExp;
@@ -383,7 +382,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
 
 export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo: number, reset = false): Keyboard {
     function forward(id: number, message: { from?: TelegramBot.User, chat: TelegramBot.Chat, message_id: number }) {
-        collectTelemetry(reset || id < 0 ? undefined : id)
+        TelemetryInteraction.collectTelemetry(reset || id < 0 ? undefined : id)
             .then(entry => {
                 if (message && originMessage.from) {
                     const replyMarkup = telemetryMarkup(originMessage, originMessage.from.id, !entry);
