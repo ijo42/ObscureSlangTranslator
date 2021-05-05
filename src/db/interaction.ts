@@ -1,18 +1,23 @@
 import prisma from "./index";
 import { TelegramFormatting } from "../utils/formatting";
+import { hasRights } from "../telegram/moderate";
+type moderatorType = Prisma.moderatorsCreateNestedOneWithoutStagingInput;
+
 import { obscure, Prisma, users } from "@prisma/client";
+type defaultPromise = Promise<{ id: number }>;
+type userType = Prisma.usersCreateNestedOneWithoutStagingInput;
 
 export namespace TelegramInteraction {
 
-    export function pushStaging(entry: obscure, user: User): Promise<{ id: number }> {
+    export function pushStaging(entry: obscure, user: User): defaultPromise {
         return TermInteraction.pushStaging(entry, userValidate(user));
     }
 
-    export function pushEntry(entry: obscure): Promise<{ id: number }> {
+    export function pushEntry(entry: obscure): defaultPromise {
         return TermInteraction.pushEntry(entry);
     }
 
-    export function userValidate(user: User): Prisma.usersCreateNestedOneWithoutStagingInput {
+    export function userValidate(user: User): userType {
         return {
             connectOrCreate: {
                 where: {
@@ -26,18 +31,18 @@ export namespace TelegramInteraction {
         };
     }
 
-    export function termFeedback(connectedTerm: obscure, user: User): Promise<{ id: number }> {
+    export function termFeedback(connectedTerm: obscure, user: User): defaultPromise {
         return TelemetryInteraction.termFeedback(connectedTerm, userValidate(user));
     }
 
-    export function markUseless(e: { id: number }, message: { text?: string }): Promise<{ id: number }> {
+    export function markUseless(e: { id: number }, message: { text?: string }): defaultPromise {
         if(!message.text) {
             throw new Error();
         }
         return TelemetryInteraction.markUseless(e, message.text);
     }
 
-    export function requestTerm(user: User, message: { text?: string }): Promise<{ id: number }> {
+    export function requestTerm(user: User, message: { text?: string }): defaultPromise {
         if(!message.text) {
             throw new Error();
         }
@@ -54,7 +59,7 @@ export namespace TelegramInteraction {
 
 export namespace TermInteraction {
 
-    export function pushStaging(entry: obscure, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
+    export function pushStaging(entry: obscure, user: userType): defaultPromise {
         return prisma.staging.create({
             data: {
                 term: entry.term,
@@ -67,7 +72,7 @@ export namespace TermInteraction {
         });
     }
 
-    export function pushEntry(entry: obscure): Promise<{ id: number }> {
+    export function pushEntry(entry: obscure): defaultPromise {
         return prisma.obscure.create({
             data: {
                 term: entry.term,
@@ -89,7 +94,7 @@ export namespace TermInteraction {
 
 export namespace TelemetryInteraction {
 
-    export function termFeedback(connectedTerm: obscure, user: Prisma.usersCreateNestedOneWithoutStagingInput): Promise<{ id: number }> {
+    export function termFeedback(connectedTerm: obscure, user: userType): defaultPromise {
         return prisma.telemetry.create({
             data: {
                 users: user,
@@ -105,7 +110,7 @@ export namespace TelemetryInteraction {
         });
     }
 
-    export function markUseful(e: { id: number }): Promise<{ id: number }> {
+    export function markUseful(e: { id: number }): defaultPromise {
         return prisma.telemetry.update({
             where: e,
             data: {
@@ -117,7 +122,7 @@ export namespace TelemetryInteraction {
         });
     }
 
-    export function markUseless(e: { id: number }, text: string): Promise<{ id: number }> {
+    export function markUseless(e: { id: number }, text: string): defaultPromise {
         return prisma.telemetry.update({
             where: e,
             data: {
@@ -130,7 +135,7 @@ export namespace TelemetryInteraction {
         });
     }
     
-    export function requestTerm(user: Prisma.usersCreateNestedOneWithoutStagingInput, text: string): Promise<{ id: number }> {
+    export function requestTerm(user: userType, text: string): defaultPromise {
         return prisma.telemetry.create({
             data: {
                 is_useful: false,
