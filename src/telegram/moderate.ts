@@ -12,7 +12,7 @@ const moderators = new Map<number, number>();
 function firstStart() {
     if (moderators.size === 0) {
         let setupUUID = randomString();
-        bot.onText(/\/setup (\w{8})/, (msg, match) => {
+        bot.onText(/\/setup ([/+=\w]{8})/, (msg, match) => {
             const promotable = msg.from;
             if (promotable && match && match[1] === setupUUID) {
                 promoteUser(promotable, -1).then(() => setupUUID = "")
