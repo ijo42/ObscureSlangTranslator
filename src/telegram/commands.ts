@@ -21,8 +21,6 @@ import { genPic } from "../utils/drawing";
 import { bot, registerCallback } from "./bot";
 import { hasRights, promoteUser } from "./moderate";
 import { StagingInteraction, TelemetryInteraction } from "../db/interaction";
-import getStaging = StagingInteraction.getStaging;
-import collectTelemetry = TelemetryInteraction.collectTelemetry;
 
 export const commands: Command[] = [
     {
@@ -139,7 +137,7 @@ export const commands: Command[] = [
             if (!msg.from || !hasRights(msg.from?.id)) {
                 bot.sendMessage(msg.chat.id, texts.hasNoRights);
             } else {
-                getStaging()
+                StagingInteraction.getStaging()
                     .then(res => {
                         if (!res) {
                             bot.sendMessage(msg.chat.id, texts.noStaging);
@@ -233,7 +231,7 @@ export const commands: Command[] = [
         description: texts.commandsAround.telemetry.desk,
         callback(msg: TelegramBot.Message): void {
             if (msg.from && hasRights(msg.from.id)) {
-                collectTelemetry()
+                TelemetryInteraction.collectTelemetry()
                     .then(entry => {
                         if (msg.from && entry) {
                             const replyMarkup = telemetryMarkup(msg, msg.from.id);

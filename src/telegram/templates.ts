@@ -264,13 +264,13 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                     callback() {
                         bot.sendMessage(chatId, "Reply to this message w/ name of new Category")
                             .then(message => {
-                                const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
+                                const listenId = bot.onReplyToMessage(chatId, message.message_id, msg => {
                                     if (msg.from && hasRights(msg.from.id) && msg.text && compiledRegexp.categoryDef.test(msg.text)) {
                                         TelegramInteraction.createCategory(msg.text, msg.from)
                                             .then(ret => bot.sendMessage(chatId, `Successful created new category ${ret.value}`))
                                             .then(() => bot.removeReplyListener(listenId));
                                     } else {
-                                        bot.sendMessage(msg.chat.id, texts.hasNoRights);
+                                        bot.sendMessage(chatId, texts.hasNoRights);
                                     }
                                 });
                             });
