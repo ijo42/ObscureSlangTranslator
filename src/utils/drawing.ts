@@ -1,6 +1,6 @@
 import Jimp from "jimp";
 import { Font } from "@jimp/plugin-print";
-import { ObscureEntry } from "../templates";
+import { obscure } from "@prisma/client";
 
 let template!: Jimp;
 let titleFont!: Font;
@@ -18,7 +18,7 @@ export default async function setup(): Promise<void> {
         .then(x => template = x);
 }
 
-export function genPic(entry: ObscureEntry): Promise<Buffer> {
+export function genPic(entry: obscure): Promise<Buffer> {
     return Jimp.create(template)
         .then(image => {
             image
