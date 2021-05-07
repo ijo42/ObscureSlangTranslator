@@ -1,4 +1,4 @@
-import { obscure } from "@prisma/client";
+import { categories, obscure } from "@prisma/client";
 import Fuse from "fuse.js";
 import prisma from "../db";
 import { compiledRegexp } from "./regexpBuilder";
@@ -74,20 +74,13 @@ export function findAndValidateTerm(text: string): (obscure | undefined) {
         .split(" "));
 }
 
-export function findAndValidateCategory(text: string):Promise<null | {
-    value: string;
-    id: number;
-}> {
+export function findAndValidateCategory(text: string):Promise<null | categories> {
     if (!compiledRegexp.categoryDef.test(text)) {
         return Promise.resolve(null);
     }
     return prisma.categories.findFirst({
         where: {
             value: text,
-        },
-        select: {
-            value: true,
-            id: true,
         },
     });
 }

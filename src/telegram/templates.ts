@@ -13,7 +13,11 @@ import { format } from "util";
 import prisma from "../db";
 import { hasRights } from "./moderate";
 import { compiledRegexp } from "../utils/regexpBuilder";
-import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
+import {
+    CategoryInteraction,
+    TelegramInteraction,
+    TelemetryInteraction,
+} from "../db/interaction";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
 
@@ -39,19 +43,6 @@ interface KeyboardButton extends TelegramBot.InlineKeyboardButton {
 export interface Keyboard extends TelegramBot.InlineKeyboardMarkup {
     inline_keyboard: KeyboardButton[][];
     restrictedTo: number | boolean;
-}
-
-function processCategory(msg: string, author: TelegramInteraction.User): Promise<string> {
-    return prisma.categories.create({
-        data: {
-            value: BaseFormatting.reformatStr(msg),
-            users: TelegramInteraction.userValidate(author),
-        },
-        select: {
-            value: true,
-        },
-    })
-        .then(r => r.value);
 }
 
 export async function processReplenishment(entry: obscure, author: TelegramInteraction.User, staging = true): Promise<obscure> {
@@ -275,8 +266,8 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             .then(message => {
                                 const listenId = bot.onReplyToMessage(message.chat.id, message.message_id, msg => {
                                     if (msg.from && hasRights(msg.from.id) && msg.text && compiledRegexp.categoryDef.test(msg.text)) {
-                                        processCategory(msg.text, msg.from)
-                                            .then(ret => bot.sendMessage(chatId, `Successful created new category ${ret}`))
+                                        TelegramInteraction.createCategory(msg.text, msg.from)
+                                            .then(ret => bot.sendMessage(chatId, `Successful created new category ${ret.value}`))
                                             .then(() => bot.removeReplyListener(listenId));
                                     } else {
                                         bot.sendMessage(msg.chat.id, texts.hasNoRights);
@@ -305,22 +296,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                             })
                                 .then(i => genNStringMarkup(findByIds(i.map(e => e.id))
                                     .filter(e => !!e)
-                                    .map(e => BaseFormatting.formatAnswerUnpreceded(<obscure>e)))),
-
-                            precessLinkage = (providedTerm: obscure, providedCategory: { id: number }) => prisma.obscure.update({
-                                where: {
-                                    id: providedTerm.id,
-                                },
-                                data: {
-                                    categories: {
-                                        connect: providedCategory,
-                                    },
-                                },
-                                select: {
-                                    id: true,
-                                },
-                            })
-                                .then(() => bot.sendMessage(chatId, "Successful linked", { reply_markup: { remove_keyboard: true } }));
+                                    .map(e => BaseFormatting.formatAnswerUnpreceded(<obscure>e))));
 
                         function processCategoryDefinition(categoryProvidedMsg: TelegramBot.Message, listenId: number, providedTerm: obscure) {
                             if (categoryProvidedMsg.from && hasRights(categoryProvidedMsg.from.id) && categoryProvidedMsg.text && compiledRegexp.categoryDef.test(categoryProvidedMsg.text)) {
@@ -328,10 +304,12 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
                                     ?.then(providedCategory => {
                                         if (!providedCategory) {
                                             bot.sendMessage(chatId, "I didn't find this category");
-                                            return;
+
+                                        } else {
+                                            bot.removeReplyListener(listenId);
+                                            CategoryInteraction.linkTerm(providedTerm, providedCategory)
+                                                .then(() => bot.sendMessage(chatId, "Successful linked", { reply_markup: { remove_keyboard: true } }));
                                         }
-                                        bot.removeReplyListener(listenId);
-                                        precessLinkage(providedTerm, providedCategory);
                                     });
                             } else {
                                 bot.sendMessage(chatId, texts.hasNoRights);
@@ -381,7 +359,7 @@ export function categorizeMarkup(chatId: number, restrictedTo: number): Keyboard
 }
 
 export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo: number, reset = false): Keyboard {
-    function forward(id: number, message: { from?: TelegramBot.User, chat: TelegramBot.Chat, message_id: number }) {
+    function forward(id: number, message: TelegramBot.Message) {
         TelemetryInteraction.collectTelemetry(reset || id < 0 ? undefined : id)
             .then(entry => {
                 if (message && originMessage.from) {
@@ -391,7 +369,11 @@ export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo
                         message_id: message.message_id,
                         reply_markup: replyMarkup,
                     })
-                        .then(e => registerCallback(<TelegramBot.Message>e, replyMarkup));
+                        .then(e => {
+                            if (typeof e !== "boolean") {
+                                registerCallback(e, replyMarkup);
+                            }
+                        });
                 } else {
                     bot.sendMessage(originMessage.chat.id, texts.telemetryModerate.noWaiting);
                 }
@@ -406,11 +388,7 @@ export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo
                     callback_data: "F",
                     callback: query => {
                         if (query.message && query.message.text) {
-                            forward(BaseFormatting.grabUsrID(query.message.text), {
-                                from: query.message.from,
-                                chat: query.message.chat,
-                                message_id: query.message.message_id,
-                            });
+                            forward(BaseFormatting.grabUsrID(query.message.text), query.message);
                         }
                     },
                 },
@@ -420,24 +398,8 @@ export function telemetryMarkup(originMessage: TelegramBot.Message, restrictedTo
                     callback: query => {
                         let id;
                         if (query.message && query.message.text && (id = BaseFormatting.grabUsrID(query.message.text)) !== 0) {
-                            forward(BaseFormatting.grabUsrID(query.message.text), 
-                                {
-                                    from: query.message.from,
-                                    chat: query.message.chat,
-                                    message_id: query.message.message_id,
-                                });
-                            prisma.telemetry.update({
-                                where: {
-                                    id,
-                                },
-                                data: {
-                                    moderated_by: hasRights(restrictedTo),
-                                    moderated_at: new Date(),
-                                },
-                                select: {
-                                    id: true,
-                                },
-                            })
+                            forward(BaseFormatting.grabUsrID(query.message.text), query.message);
+                            TelegramInteraction.markReportResolved(id, query.from)
                                 .then(() => bot.sendMessage(originMessage.chat.id, texts.success));
                         }
                     },

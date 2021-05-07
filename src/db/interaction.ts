@@ -1,9 +1,9 @@
 import prisma from "./index";
-import { TelegramFormatting } from "../utils/formatting";
+import { BaseFormatting, TelegramFormatting } from "../utils/formatting";
 import { hasRights } from "../telegram/moderate";
+import { obscure, categories, Prisma, users } from "@prisma/client";
+import TelegramBot from "node-telegram-bot-api";
 type moderatorType = Prisma.moderatorsCreateNestedOneWithoutStagingInput;
-
-import { obscure, Prisma, users } from "@prisma/client";
 type defaultPromise = Promise<{ id: number }>;
 type userType = Prisma.usersCreateNestedOneWithoutStagingInput;
 
@@ -47,6 +47,18 @@ export namespace TelegramInteraction {
             throw new Error();
         }
         return TelemetryInteraction.requestTerm(userValidate(user), message.text);
+    }
+
+    export function markReportResolved(reportId: number, user: User): defaultPromise {
+        return TelemetryInteraction.markResolved(reportId, {
+            connect: {
+                id: hasRights(user.id),
+            },
+        });
+    }
+
+    export function createCategory(msg: string, author: TelegramBot.User): Promise<{ value: string }> {
+        return CategoryInteraction.createCategory(msg, TelegramInteraction.userValidate(author));
     }
 
     export type User = {
@@ -167,6 +179,21 @@ export namespace TelemetryInteraction {
         });
     }
 
+    export function markResolved(id: number, moderators: moderatorType): defaultPromise {
+        return prisma.telemetry.update({
+            where: {
+                id,
+            },
+            data: {
+                moderators,
+                moderated_at: new Date(),
+            },
+            select: {
+                id: true,
+            },
+        });
+    }
+
 }
 
 export namespace StagingInteraction {
@@ -182,6 +209,35 @@ export namespace StagingInteraction {
                 value: true,
                 term: true,
                 users: true,
+            },
+        });
+    }
+}
+
+export namespace CategoryInteraction {
+
+    export function linkTerm(providedTerm: obscure, providedCategory: categories): defaultPromise {
+        return prisma.obscure.update({
+            where: providedTerm,
+            data: {
+                categories: {
+                    connect: providedCategory,
+                },
+            },
+            select: {
+                id: true,
+            },
+        });
+    }
+
+    export function createCategory(msg: string, author: userType): Promise<{ value: string }> {
+        return prisma.categories.create({
+            data: {
+                value: BaseFormatting.reformatStr(msg),
+                users: author,
+            },
+            select: {
+                value: true,
             },
         });
     }
