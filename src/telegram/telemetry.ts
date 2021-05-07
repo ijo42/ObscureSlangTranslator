@@ -1,11 +1,11 @@
-import { Message } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import { texts } from "../texts";
 import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
 import { Keyboard } from "./templates";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
 
-export function requestTermFeedback(term: obscure, originalMsg: Message, feedbackRequested = false): void {
+export function requestTermFeedback(term: obscure, originalMsg: TelegramBot.Message, feedbackRequested = false): void {
     if (!originalMsg.from) {
         return;
     }
@@ -41,7 +41,7 @@ export function requestTermFeedback(term: obscure, originalMsg: Message, feedbac
     });
 }
 
-export function requestIDKFeedback(originalMsg: Message): void {
+export function requestIDKFeedback(originalMsg: TelegramBot.Message): void {
     if (!originalMsg.from) {
         return;
     }
