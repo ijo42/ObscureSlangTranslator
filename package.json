@@ -26,7 +26,7 @@
     "@types/node-telegram-bot-api": "^0.51.1",
     "@types/pg": "^7.14.11",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
-    "@typescript-eslint/parser": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.1",
     "eslint": "^7.25.0",
     "husky": "^6.0.0",
     "prisma": "^2.21.2",
