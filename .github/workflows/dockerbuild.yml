@@ -37,8 +37,8 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v3.1.0
+        id: meta
+        uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
@@ -64,7 +64,6 @@ jobs:
       - uses: danielweller-swp/postgresql-action@v2
         with:
           postgresql version: '13'
-          postgresql init scripts: 'prisma/migrations/init'
           postgresql password: 'pass'
 
       - name: Build and push
@@ -73,8 +72,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' || github.repository == github.event.pull_request.head.repo.full_name }}
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
