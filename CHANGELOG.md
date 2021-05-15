@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.4.0...v1.5.0) (2021-05-15)
+
+
+### Features
+
+* asking for contribution due to idk answer ([6fb4095](https://www.github.com/ijo42/ObscureSlangTranslator/commit/6fb4095f106625fadb4aa25c3b6132eb1a4888ca))
+
+
+### Performance Improvements
+
+* turn off select redundant fields ([521e05f](https://www.github.com/ijo42/ObscureSlangTranslator/commit/521e05f9ce5c48133c3d8a022a5982a6ddb38712))
+
 ## [1.4.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.3.0...v1.4.0) (2021-04-30)
 
 
