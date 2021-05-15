@@ -14,13 +14,14 @@ import { requestIDKFeedback, requestTermFeedback } from "./telemetry";
 import {
     categorizeMarkup,
     Command,
-    keyboardWithConfirmation, moderateMarkup,
+    keyboardWithConfirmation, ModerateAction, moderateMarkup,
     processReplenishment, telemetryMarkup,
 } from "./templates";
 import { genPic } from "../utils/drawing";
 import { bot, registerCallback } from "./bot";
 import { hasRights, promoteUser } from "./moderate";
 import { StagingInteraction, TelemetryInteraction } from "../db/interaction";
+import { obscure } from "@prisma/client";
 
 export const commands: Command[] = [
     {
@@ -57,7 +58,7 @@ export const commands: Command[] = [
                 throw new Error("Empty term array");
             }
 
-            const entry = {
+            const entry: obscure = {
                 id: -1, synonyms: [],
                 term: vars[0],
                 value: vars[1],
@@ -143,17 +144,17 @@ export const commands: Command[] = [
                             bot.sendMessage(msg.chat.id, texts.noStaging);
                             return;
                         }
-                        if (!msg.from) {
-                            throw new Error("msg.from is undefined");
+                        if (!msg.from || res.users.telegram_id === null || res.users.telegram_username === null) {
+                            throw new Error("args mismatch");
                         }
-                        const match = {
+                        const match: ModerateAction = {
                             id: -1, synonyms: [],
                             stagingId: res.id,
                             value: res.value,
                             term: res.term,
                             author: {
-                                id: <number>res.users.telegram_id,
-                                first_name: <string>res.users.telegram_username,
+                                id: res.users.telegram_id,
+                                first_name: res.users.telegram_username,
                             },
                             reviewer: msg.from.id,
                             reviewingChat: msg.chat.id,
@@ -183,7 +184,7 @@ export const commands: Command[] = [
                 }));
                 requestTermFeedback(entry, msg);
             } else {
-                bot.sendMessage(msg.chat.id, "IDK");
+                bot.sendMessage(msg.chat.id, texts.unknownTerm);
                 requestIDKFeedback(msg);
             }
         },
@@ -208,7 +209,7 @@ export const commands: Command[] = [
             if (msg.from && hasRights(msg.from.id)) {
                 const obscureTerm = fuzzySearch(match);
                 if (!obscureTerm) {
-                    bot.sendMessage(msg.chat.id, "Not found");
+                    bot.sendMessage(msg.chat.id, texts.unknownTerm);
                     return;
                 }
                 const confirm = keyboardWithConfirmation(() => {
@@ -284,7 +285,7 @@ export const defaultCommand = {
                 }));
                 requestTermFeedback(entry, msg, true);
             } else {
-                bot.sendMessage(msg.chat.id, "IDK");
+                bot.sendMessage(msg.chat.id, texts.unknownTerm);
                 requestIDKFeedback(msg);
             }
         }
