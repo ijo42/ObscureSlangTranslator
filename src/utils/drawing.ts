@@ -22,13 +22,13 @@ export function genPic(entry: obscure): Promise<Buffer> {
     return Jimp.create(template)
         .then(image => {
             image
-                .print(titleFont, 0, image.getHeight() / 10, {
+                .print(titleFont, 0, image.getHeight() / 8, {
                     text: entry.term,
                     alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
                     alignmentY: Jimp.VERTICAL_ALIGN_TOP,
                 }, image.getWidth())
 
-                .print(bodyFont, 0, image.getHeight() / 3, {
+                .print(bodyFont, 0, image.getHeight() / 2.5, {
                     text: entry.value,
                     alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
                     alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
