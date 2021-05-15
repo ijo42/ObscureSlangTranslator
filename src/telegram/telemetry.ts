@@ -4,6 +4,7 @@ import { TelegramInteraction, TelemetryInteraction } from "../db/interaction";
 import { Keyboard } from "./templates";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
+import { randomInt } from "crypto";
 
 export function requestTermFeedback(term: obscure, originalMsg: TelegramBot.Message, feedbackRequested = false): void {
     if (!originalMsg.from) {
@@ -72,4 +73,12 @@ export function requestIDKFeedback(originalMsg: TelegramBot.Message): void {
     bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback, {
         reply_markup: markup,
     }).then(r => registerCallback(r, markup));
+
+    askContribute(originalMsg.chat.id);
+}
+
+function askContribute(chatId: number) {
+    if(randomInt(5) === 0) {
+        bot.sendMessage(chatId, texts.contributeAsk);
+    }
 }
