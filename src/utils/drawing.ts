@@ -8,37 +8,37 @@ let bodyFont!: Font;
 let additionalFont!: Font;
 
 export default async function setup(): Promise<void> {
-    Jimp.loadFont("resources/title.fnt")
-        .then(x => titleFont = x);
-    Jimp.loadFont("resources/body.fnt")
-        .then(x => bodyFont = x);
-    Jimp.loadFont("resources/additional.fnt")
-        .then(x => additionalFont = x);
-    await Jimp.create("resources/template.png")
-        .then(x => template = x);
+    await Promise.all([
+        Jimp.loadFont("resources/title.fnt"),
+        Jimp.loadFont("resources/body.fnt"),
+        Jimp.loadFont("resources/additional.fnt"),
+        Jimp.create("resources/template.png"),
+    ]).then(([title, body, additional, templatePromise]) => {
+        titleFont = title;
+        bodyFont = body;
+        additionalFont = additional;
+        template = templatePromise;
+    });
 }
 
 export function genPic(entry: obscure): Promise<Buffer> {
     return Jimp.create(template)
-        .then(image => {
-            image
-                .print(titleFont, 0, image.getHeight() / 8, {
-                    text: entry.term,
-                    alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-                    alignmentY: Jimp.VERTICAL_ALIGN_TOP,
-                }, image.getWidth())
+        .then(image => image
+            .print(titleFont, 0, image.getHeight() / 8, {
+                text: entry.term,
+                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+                alignmentY: Jimp.VERTICAL_ALIGN_TOP,
+            }, image.getWidth())
 
-                .print(bodyFont, 0, image.getHeight() / 2.5, {
-                    text: entry.value,
-                    alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-                    alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
-                }, image.getWidth())
+            .print(bodyFont, 0, image.getHeight() / 2.5, {
+                text: entry.value,
+                alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+                alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
+            }, image.getWidth())
 
-                .print(additionalFont, -10, 10, {
-                    text: `#${entry.id}`,
-                    alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
-                }, image.getWidth());
-
-            return image.getBufferAsync(Jimp.MIME_PNG);
-        });
+            .print(additionalFont, -10, 10, {
+                text: `#${entry.id}`,
+                alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
+            }, image.getWidth())
+            .getBufferAsync(Jimp.MIME_PNG));
 }
