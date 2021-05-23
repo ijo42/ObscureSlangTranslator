@@ -16,7 +16,7 @@ import { compiledRegexp } from "../utils/regexpBuilder";
 import {
     CategoryInteraction,
     TelegramInteraction,
-    TelemetryInteraction,
+    TelemetryInteraction, TermInteraction,
 } from "../db/interaction";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
@@ -31,7 +31,7 @@ export interface Command extends TelegramBot.BotCommand {
 export interface ModerateAction extends obscure {
     stagingId: number;
     author: TelegramInteraction.User;
-    reviewer: number;
+    reviewer: TelegramInteraction.User;
     reviewingChat: number;
     msgId: number;
 }
@@ -93,7 +93,7 @@ function genNStringMarkup(matchedEnters: ReadonlyArray<string>): TelegramBot.Rep
     return keyboard;
 }
 
-export function moderateMarkup(match: ModerateAction, restrictedTo: number | boolean = false): Keyboard {
+export function moderateMarkup(action: ModerateAction, restrictedTo: number | boolean = false): Keyboard {
     return {
         inline_keyboard: [
             [
@@ -101,52 +101,30 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: "ACCEPT",
                     callback_data: "A",
                     callback() {
-                        processReplenishment(match, match.author, false)
-                            .then(acceptedAs => prisma.staging.update({
-                                where: {
-                                    id: match.stagingId,
-                                },
-                                data: {
-                                    status: "accepted",
-                                    reviewed_by: hasRights(match.reviewer),
-                                    accepted_as: acceptedAs.id,
-                                },
-                                select: {
-                                    id: true,
-                                },
-                            })
+                        processReplenishment(action, action.author, false)
+                            .then(acceptedAs => TelegramInteraction.moderateAction(action, "accepted", acceptedAs)
                                 .then(() => {
-                                    bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.acceptedNotify);
-                                    bot.sendMessage(match.author.id, format(texts.moderateAnnounce.accepted, TelegramFormatting.formatAnswer(match)), {
+                                    bot.sendMessage(action.reviewingChat, texts.moderateAnnounce.acceptedNotify);
+                                    bot.sendMessage(action.author.id, format(texts.moderateAnnounce.accepted, 
+                                        TelegramFormatting.formatAnswer(action)), {
                                         parse_mode: "MarkdownV2",
                                     });
-                                })
-                                .catch(e => bot.sendMessage(match.reviewer, e.stack)));
+                                }))
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
                     },
                 },
                 {
                     text: "DECLINE",
                     callback_data: "D",
                     callback() {
-                        prisma.staging.update({
-                            where: {
-                                id: match.stagingId,
-                            },
-                            data: {
-                                status: "declined",
-                                reviewed_by: hasRights(match.reviewer),
-                            },
-                            select: {
-                                id: true,
-                            },
-                        })
+                        TelegramInteraction.moderateAction(action, "declined")
                             .then(() => {
-                                bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.declinedNotify);
-                                bot.sendMessage(match.author.id, format(texts.moderateAnnounce.declined, TelegramFormatting.formatAnswer(match)), {
+                                bot.sendMessage(action.reviewingChat, texts.moderateAnnounce.declinedNotify);
+                                bot.sendMessage(action.author.id, format(texts.moderateAnnounce.declined, TelegramFormatting.formatAnswer(action)), {
                                     parse_mode: "MarkdownV2",
                                 });
                             })
-                            .catch(e => bot.sendMessage(match.reviewer, e.stack));
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
                     },
                 },
             ],
@@ -155,25 +133,14 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
                     text: "REQUEST CHANGES",
                     callback_data: "R",
                     callback() {
-                        prisma.staging.update({
-                            where: {
-                                id: match.stagingId,
-                            },
-                            data: {
-                                status: "request_changes",
-                                reviewed_by: hasRights(match.reviewer),
-                            },
-                            select: {
-                                id: true,
-                            },
-                        })
+                        TelegramInteraction.moderateAction(action, "request_changes")
                             .then(() => {
-                                bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.requestNotify);
-                                bot.sendMessage(match.author.id, format(texts.moderateAnnounce.request_changes, TelegramFormatting.formatAnswer(match)), {
+                                bot.sendMessage(action.reviewingChat, texts.moderateAnnounce.requestNotify);
+                                bot.sendMessage(action.author.id, format(texts.moderateAnnounce.request_changes, TelegramFormatting.formatAnswer(action)), {
                                     parse_mode: "MarkdownV2",
                                 });
                             })
-                            .catch(e => bot.sendMessage(match.reviewer, e.stack));
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
                     },
                 },
                 {
@@ -192,49 +159,27 @@ export function moderateMarkup(match: ModerateAction, restrictedTo: number | boo
 
                         const callback: (originEntry: obscure) => void = (originEntry: obscure) => {
                             Promise.all([
-                                prisma.obscure.update({
-                                    where: originEntry,
-                                    data: {
-                                        synonyms: {
-                                            push: match.term,
-                                        },
-                                    },
-                                    select: {
-                                        id: true,
-                                    },
-                                }),
-                                prisma.staging.update({
-                                    where: {
-                                        id: match.stagingId,
-                                    },
-                                    data: {
-                                        status: "synonym",
-                                        reviewed_by: hasRights(match.reviewer),
-                                        accepted_as: originEntry.id,
-                                    },
-                                    select: {
-                                        id: true,
-                                    },
-                                }),
+                                TermInteraction.pushSynonym(originEntry, action),
+                                TelegramInteraction.moderateAction(action, "synonym", originEntry),
                             ])
                                 .then(() => {
-                                    editTerm(originEntry, t => t.synonyms.push(match.term));
-                                    bot.sendMessage(match.reviewingChat, texts.moderateAnnounce.synonymNotify, { reply_markup: { remove_keyboard: true } });
-                                    bot.sendMessage(match.author.id, format(texts.moderateAnnounce.synonym, TelegramFormatting.formatAnswer(match), TelegramFormatting.formatAnswer(originEntry)), {
+                                    editTerm(originEntry, t => t.synonyms.push(action.term));
+                                    bot.sendMessage(action.reviewingChat, texts.moderateAnnounce.synonymNotify, { reply_markup: { remove_keyboard: true } });
+                                    bot.sendMessage(action.author.id, format(texts.moderateAnnounce.synonym, TelegramFormatting.formatAnswer(action), TelegramFormatting.formatAnswer(originEntry)), {
                                         parse_mode: "MarkdownV2",
                                     });
                                 })
                                 .catch(e => console.error(e));
                         };
 
-                        bot.sendMessage(match.reviewingChat, "Select Synonym (must reply)", {
-                            reply_markup: generateSynonymMarkup(match),
-                            reply_to_message_id: match.msgId,
+                        bot.sendMessage(action.reviewingChat, "Select Synonym (must reply)", {
+                            reply_markup: generateSynonymMarkup(action),
+                            reply_to_message_id: action.msgId,
                         })
                             .then(m => {
                                 const listener = bot.onReplyToMessage(m.chat.id, m.message_id, msg => {
 
-                                    if (!msg.text || msg.from?.id !== match.reviewer) {
+                                    if (!msg.text || msg.from?.id !== action.reviewer.id) {
                                         return;
                                     }
                                     const fuzzy = findAndValidateTerm(msg.text);

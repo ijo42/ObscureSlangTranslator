@@ -1,11 +1,13 @@
 import prisma from "./index";
 import { BaseFormatting, TelegramFormatting } from "../utils/formatting";
 import { hasRights } from "../telegram/moderate";
-import { obscure, categories, Prisma, users } from "@prisma/client";
+import { obscure, categories, Prisma, users, staging_status } from "@prisma/client";
 import TelegramBot from "node-telegram-bot-api";
+import { ModerateAction } from "../telegram/templates";
 type moderatorType = Prisma.moderatorsCreateNestedOneWithoutStagingInput;
+type obscureType   = Prisma.obscureCreateNestedOneWithoutStagingInput;
+type userType      = Prisma.usersCreateNestedOneWithoutStagingInput;
 type defaultPromise = Promise<{ id: number }>;
-type userType = Prisma.usersCreateNestedOneWithoutStagingInput;
 
 export namespace TelegramInteraction {
 
@@ -31,6 +33,14 @@ export namespace TelegramInteraction {
         };
     }
 
+    export function moderatorValidate({ id }: User): moderatorType {
+        return {
+            connect: {
+                id: hasRights(id),
+            },
+        };
+    }
+
     export function termFeedback(connectedTerm: obscure, user: User): defaultPromise {
         return TelemetryInteraction.termFeedback(connectedTerm, userValidate(user));
     }
@@ -50,15 +60,15 @@ export namespace TelegramInteraction {
     }
 
     export function markReportResolved(reportId: number, user: User): defaultPromise {
-        return TelemetryInteraction.markResolved(reportId, {
-            connect: {
-                id: hasRights(user.id),
-            },
-        });
+        return TelemetryInteraction.markResolved(reportId, moderatorValidate(user));
     }
 
     export function createCategory(msg: string, author: TelegramBot.User): Promise<{ value: string }> {
-        return CategoryInteraction.createCategory(msg, TelegramInteraction.userValidate(author));
+        return CategoryInteraction.createCategory(msg, userValidate(author));
+    }
+
+    export function moderateAction(staging: ModerateAction, status: staging_status, obscureTerm?: obscure): defaultPromise {
+        return StagingInteraction.moderateAction(staging.stagingId, moderatorValidate(staging.reviewer), status, obscureTerm);
     }
 
     export type User = {
@@ -71,12 +81,12 @@ export namespace TelegramInteraction {
 
 export namespace TermInteraction {
 
-    export function pushStaging(entry: obscure, user: userType): defaultPromise {
+    export function pushStaging({ term, value }: obscure, users: userType): defaultPromise {
         return prisma.staging.create({
             data: {
-                term: entry.term,
-                value: entry.value,
-                users: user,
+                term,
+                value,
+                users,
             },
             select: {
                 id: true,
@@ -84,11 +94,11 @@ export namespace TermInteraction {
         });
     }
 
-    export function pushEntry(entry: obscure): defaultPromise {
+    export function pushEntry({ term, value }: obscure): defaultPromise {
         return prisma.obscure.create({
             data: {
-                term: entry.term,
-                value: entry.value,
+                term,
+                value,
             },
             select: {
                 id: true,
@@ -102,6 +112,28 @@ export namespace TermInteraction {
             select: {},
         });
     }
+
+    export function pushSynonym(entry: obscure, staging: ModerateAction): defaultPromise {
+        return prisma.obscure.update({
+            where: entry,
+            data: {
+                synonyms: {
+                    push: staging.term,
+                },
+            },
+            select: {
+                id: true,
+            },
+        });
+    }
+
+    export function validateTerm({ id }: obscure): obscureType {
+        return {
+            connect: {
+                id,
+            },
+        };
+    }
 }
 
 export namespace TelemetryInteraction {
@@ -110,11 +142,7 @@ export namespace TelemetryInteraction {
         return prisma.telemetry.create({
             data: {
                 users: user,
-                obscure: {
-                    connect: {
-                        id: connectedTerm.id,
-                    },
-                },
+                obscure: TermInteraction.validateTerm(connectedTerm),
             },
             select: {
                 id: true,
@@ -209,6 +237,22 @@ export namespace StagingInteraction {
                 value: true,
                 term: true,
                 users: true,
+            },
+        });
+    }
+
+    export function moderateAction(stagingId: number, moderators: moderatorType, status: staging_status, obscureTerm?: obscure): defaultPromise {
+        return prisma.staging.update({
+            where: {
+                id: stagingId,
+            },
+            data: {
+                moderators,
+                status,
+                obscure: status === "accepted" && obscureTerm ? TermInteraction.validateTerm(obscureTerm) : undefined,
+            },
+            select: {
+                id: true,
             },
         });
     }

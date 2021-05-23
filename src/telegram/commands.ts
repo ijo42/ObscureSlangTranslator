@@ -156,7 +156,7 @@ export const commands: Command[] = [
                                 id: res.users.telegram_id,
                                 first_name: res.users.telegram_username,
                             },
-                            reviewer: msg.from.id,
+                            reviewer: msg.from,
                             reviewingChat: msg.chat.id,
                             msgId: msg.message_id,
                         };
