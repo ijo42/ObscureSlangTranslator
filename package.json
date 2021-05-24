@@ -17,7 +17,8 @@
     "@prisma/client": "^2.23.0",
     "fuse.js": "^6.4.6",
     "jimp": "^0.16.1",
-    "node-telegram-bot-api": "^0.53.0"
+    "node-telegram-bot-api": "^0.53.0",
+    "prom-client": "^13.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.4",
