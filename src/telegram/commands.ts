@@ -22,6 +22,7 @@ import { bot, registerCallback } from "./bot";
 import { hasRights, promoteUser } from "./moderate";
 import { StagingInteraction, TelemetryInteraction } from "../db/interaction";
 import { obscure } from "@prisma/client";
+import { Metrics } from "../metrics";
 
 export const commands: Command[] = [
     {
@@ -177,13 +178,16 @@ export const commands: Command[] = [
         command: "/picture",
         description: texts.commandsAround.picture.desk,
         callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
+            Metrics.commandTermRequests.inc();
             const entry = fuzzySearch(match);
             if (entry) {
+                Metrics.successfulTermSearch.inc();
                 genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
                     caption: BaseFormatting.formatAnswerUnpreceded(entry),
                 }));
                 requestTermFeedback(entry, msg);
             } else {
+                Metrics.failedTermSearch.inc();
                 bot.sendMessage(msg.chat.id, texts.unknownTerm);
                 requestIDKFeedback(msg);
             }
@@ -278,13 +282,16 @@ export const defaultCommand = {
     regexp: compiledRegexp.searchableExp,
     callback(msg: TelegramBot.Message, match: RegExpExecArray | null): void {
         if (msg.from && msg.chat.type === "private" && msg.text && !msg.text.startsWith("/") && !msg.reply_to_message) {
+            Metrics.commandTermRequests.inc();
             const entry = fuzzySearch(match);
             if (entry) {
+                Metrics.successfulTermSearch.inc();
                 genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
                     caption: BaseFormatting.formatAnswerUnpreceded(entry),
                 }));
                 requestTermFeedback(entry, msg, true);
             } else {
+                Metrics.failedTermSearch.inc();
                 bot.sendMessage(msg.chat.id, texts.unknownTerm);
                 requestIDKFeedback(msg);
             }
