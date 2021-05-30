@@ -6,6 +6,7 @@ import { Keyboard } from "./templates";
 import { fuzzySearchWithLen } from "../utils/fuzzySearch";
 import { randomInt } from "crypto";
 import { TelegramFormatting } from "../utils/formatting";
+import { Metrics } from "../metrics";
 
 const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
 export const bot = new TelegramBot(token, { polling: true });
@@ -84,6 +85,7 @@ export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: 
 };
 
 export function processInline(query: TelegramBot.InlineQuery): void {
+    Metrics.inlineRequests.inc();
     bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value => <TelegramBot.InlineQueryResultArticle>{
         type: "article",
         id: randomInt(10000).toString(),

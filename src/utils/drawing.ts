@@ -1,6 +1,7 @@
 import Jimp from "jimp";
 import { Font } from "@jimp/plugin-print";
 import { obscure } from "@prisma/client";
+import { Metrics } from "../metrics";
 
 let template!: Jimp;
 let titleFont!: Font;
@@ -22,6 +23,7 @@ export default async function setup(): Promise<void> {
 }
 
 export function genPic(entry: obscure): Promise<Buffer> {
+    const timer = Metrics.renderDurationMicroseconds.startTimer();
     return Jimp.create(template)
         .then(image => image
             .print(titleFont, 0, image.getHeight() / 8, {
@@ -40,5 +42,9 @@ export function genPic(entry: obscure): Promise<Buffer> {
                 text: `#${entry.id}`,
                 alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT,
             }, image.getWidth())
-            .getBufferAsync(Jimp.MIME_PNG));
+            .getBufferAsync(Jimp.MIME_PNG))
+        .then(buff => {
+            timer({ code: 200 });
+            return buff;
+        });
 }
