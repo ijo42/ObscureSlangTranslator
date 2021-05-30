@@ -2,7 +2,6 @@ import * as util from "util";
 import { texts } from "../texts";
 import { randomBytes } from "crypto";
 import { TelegramInteraction } from "../db/interaction";
-import { fuzzySearch } from "./fuzzySearch";
 import { obscure } from "@prisma/client";
 
 export namespace TelegramFormatting {
@@ -22,12 +21,6 @@ export namespace TelegramFormatting {
 
     export const formatAnswer: (entry: obscure) => string =
         (entry: obscure) => precedeChar(BaseFormatting.formatAnswerUnpreceded(entry));
-
-    export const fuzzyFormat: (query: (string[] | null)) => string = (query: string[] | null) => {
-        const entry = fuzzySearch(query);
-        return entry ? TelegramFormatting.formatAnswer(entry) : "*IDK*";
-    };
-
 }
 
 export namespace BaseFormatting {

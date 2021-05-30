@@ -86,14 +86,6 @@ export const commands: Command[] = [
         callback: msg => bot.sendMessage(msg.chat.id, texts.welcome),
     },
     {
-        command: "/get",
-        regexp: regexpBuild("get", baseRegexp.searchableExp),
-        description: texts.commandsAround.get.desk,
-        callback: (msg, match) => bot.sendMessage(msg.chat.id, TelegramFormatting.fuzzyFormat(match), {
-            parse_mode: "MarkdownV2",
-        }),
-    },
-    {
         command: "/promote",
         regexp: regexpBuild("promote"),
         description: texts.commandsAround.promote.desk,
