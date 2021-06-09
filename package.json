@@ -14,7 +14,7 @@
   "author": "ijo42 <admin@ijo42.ru>",
   "license": "MPL-2.0",
   "dependencies": {
-    "@prisma/client": "^2.23.0",
+    "@prisma/client": "^2.24.1",
     "fuse.js": "^6.4.6",
     "jimp": "^0.16.1",
     "node-telegram-bot-api": "^0.53.0",
@@ -30,9 +30,9 @@
     "@typescript-eslint/parser": "^4.24.0",
     "eslint": "^7.27.0",
     "husky": "^6.0.0",
-    "prisma": "^2.23.0",
+    "prisma": "^2.24.1",
     "ts-node": "^10.0.0",
-    "typescript": "^4.2.4"
+    "typescript": "^4.3.2"
   },
   "repository": {
     "type": "git",
