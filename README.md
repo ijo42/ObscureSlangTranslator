@@ -25,7 +25,7 @@ I love java, but sometimes I want some variety... sorry for the bleeding eyes
 |            `latest` | Using the `latest` tag will pull the latest release image    |
 |            `master` | Using the `master` tag will pull latest master-branch image  |
 | `sha-([a-z0-9]{7})` | Using this tag will push image based on relevant git-commit `(sha-155fc99)` |
-|        `\d\.\d\.\d` | Using this tag will push relevant Release `(1.1.0)`          |
+|             `#.#.#` | Using this tag will push relevant Release `(1.1.0)`          |
 
 ------
 
@@ -43,7 +43,7 @@ PGHOST=obscure_db
 PGUSER=root
 PGDATABASE=postgres
 PGPASSWORD=****
-PGPORT=5432
+#PGPORT=5432 # Only if need map to global network
 
 DEBUG=false
 TELEGRAM_TOKEN=****
@@ -57,14 +57,13 @@ version: "2"
 services:
   bot:
     image: ijo42/obscureslangtranslator:latest
-    container_name: obscure_bot
     restart: always
     depends_on:
       - db
     environment:
       DB_URL: postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:5432/${PGDATABASE}?schema=public
       DEBUG: ${DEBUG}
-       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
   db:
     image: postgres:latest
     container_name: ${PGHOST}
@@ -72,14 +71,14 @@ services:
    # ports:             # Only if need map to global network
    #   - ${PGPORT}:5432
     volumes:
-      - obscure_db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${PGUSER}
       POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE}
 
 volumes:
-  obscure_db_data:
+  db_data:
  ```
 
 4. start via `docker-compose up -d`
@@ -89,6 +88,5 @@ volumes:
 
 As described in [LICENSE](https://github.com/ijo42/ObscureSlangTranslator/blob/master/LICENSE), MPL-2.0 used
 
-I also try to stick to [Semantic Versioning](https://semver.org/)
-, [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
+I also try to stick to [Semantic Versioning](https://semver.org/), [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
