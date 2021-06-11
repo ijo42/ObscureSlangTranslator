@@ -110,7 +110,7 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                                         parse_mode: "MarkdownV2",
                                     });
                                 }))
-                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.message));
                     },
                 },
                 {
@@ -124,7 +124,7 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                                     parse_mode: "MarkdownV2",
                                 });
                             })
-                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.message));
                     },
                 },
             ],
@@ -140,7 +140,7 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                                     parse_mode: "MarkdownV2",
                                 });
                             })
-                            .catch(e => bot.sendMessage(action.reviewer.id, e.stack));
+                            .catch(e => bot.sendMessage(action.reviewer.id, e.message));
                     },
                 },
                 {
@@ -157,7 +157,7 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                             return genNStringMarkup(matchedEnters);
                         }
 
-                        const callback: (originEntry: obscure) => void = (originEntry: obscure) => {
+                        function callback(originEntry: obscure) {
                             Promise.all([
                                 TermInteraction.pushSynonym(originEntry, action),
                                 TelegramInteraction.moderateAction(action, "synonym", originEntry),
@@ -169,8 +169,8 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                                         parse_mode: "MarkdownV2",
                                     });
                                 })
-                                .catch(e => console.error(e));
-                        };
+                                .catch(e => bot.sendMessage(action.reviewer.id, e.message));
+                        }
 
                         bot.sendMessage(action.reviewingChat, "Select Synonym (must reply)", {
                             reply_markup: generateSynonymMarkup(action),
