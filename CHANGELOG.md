@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.5.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.4.0...v1.5.0) (2021-06-11)
+
+
+### Features
+
+* asking for contribution due to idk answer ([f33923e](https://www.github.com/ijo42/ObscureSlangTranslator/commit/f33923efb66312fd661514685d97710b81243ebd))
+* basic business metrics ([#76](https://www.github.com/ijo42/ObscureSlangTranslator/issues/76)) ([8b8d38f](https://www.github.com/ijo42/ObscureSlangTranslator/commit/8b8d38fc902431416a903e1abacf66107eb1d940))
+* drop already moderated terms ([7d83404](https://www.github.com/ijo42/ObscureSlangTranslator/commit/7d834046e9752f637842d065568106802517f1f0))
+
+
+### Bug Fixes
+
+* term cannot be deleted w/o returning signature ([b45ac6f](https://www.github.com/ijo42/ObscureSlangTranslator/commit/b45ac6f4909b75934964819ec795b09f54e18f31))
+
+
+### Performance Improvements
+
+* turn off select redundant fields ([8eab1cb](https://www.github.com/ijo42/ObscureSlangTranslator/commit/8eab1cb259e59f683851cc1b621e073d6fc8f948))
+
 ## [1.4.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.3.0...v1.4.0) (2021-04-30)
 
 
