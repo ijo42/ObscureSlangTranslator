@@ -106,10 +106,14 @@ export namespace TermInteraction {
         });
     }
 
-    export function deleteTerm(obscureTerm: obscure): Promise<Record<string, never>> {
+    export function deleteTerm(obscureTerm: obscure): defaultPromise {
         return prisma.obscure.delete({
-            where: obscureTerm,
-            select: {},
+            where: {
+                id: obscureTerm.id,
+            },
+            select: {
+                id: true,
+            },
         });
     }
 
