@@ -54,19 +54,17 @@ export const commands: Command[] = [
             const vars: string[] = BaseFormatting.reformat(
                 BaseFormatting.capitalize([match[1], match[2]]),
             );
-            const fuzzy = fuseSearchWithLen(vars, 1)[0];
             if (!(vars[0] && vars[1])) {
                 throw new Error("Empty term array");
             }
-
             const entry: obscure = {
                 id: -1, synonyms: [],
                 term: vars[0],
                 value: vars[1],
             };
-            if(fuzzy?.score && fuzzy.score <= 0.00001) {
-                bot.sendMessage(chatId, texts.duplicate);
-            } else if (fuzzy?.item) {
+
+            const fuzzy = fuseSearchWithLen(vars, 1)[0];
+            if (fuzzy?.item) {
                 const keyboard = keyboardWithConfirmation(upload, "Force", msg.from.id);
                 bot.sendMessage(chatId, BaseFormatting.formatDuplicationCheck(fuzzy.item), {
                     reply_markup: keyboard,
@@ -209,9 +207,9 @@ export const commands: Command[] = [
                     return;
                 }
                 const confirm = keyboardWithConfirmation(() => {
-                    console.log(`Deleted term ${JSON.stringify(obscureTerm)}`);
                     deleteTerm(obscureTerm)
                         .then(() => bot.sendMessage(msg.chat.id, "Successful"));
+                    console.log(`Deleted term ${JSON.stringify(obscureTerm)}`);
                 }, "Force", msg.from.id);
                 bot.sendMessage(msg.chat.id, BaseFormatting.concreteTerm(obscureTerm), {
                     reply_markup: confirm,
