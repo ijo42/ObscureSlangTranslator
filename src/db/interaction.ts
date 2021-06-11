@@ -245,7 +245,20 @@ export namespace StagingInteraction {
         });
     }
 
-    export function moderateAction(stagingId: number, moderators: moderatorType, status: staging_status, obscureTerm?: obscure): defaultPromise {
+    export async function moderateAction(stagingId: number, moderators: moderatorType, status: staging_status, obscureTerm?: obscure): defaultPromise {
+        await prisma.staging.findUnique({
+            where: {
+                id: stagingId,
+            },
+            select: {
+                status: true,
+            },
+        }).then(staging => {
+            if (staging?.status !== "waiting") {
+                throw new Error("Term is already moderated");
+            }
+        });
+
         return prisma.staging.update({
             where: {
                 id: stagingId,
