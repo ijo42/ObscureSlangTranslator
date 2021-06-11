@@ -85,4 +85,5 @@ enum staging_status {
   declined
   request_changes
   synonym
+  deleted
 }
