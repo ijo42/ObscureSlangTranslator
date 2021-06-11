@@ -1,21 +1,25 @@
 import { texts } from "../texts";
-import {
-    BaseFormatting, TelegramFormatting,
-} from "../utils/formatting";
+import { BaseFormatting, TelegramFormatting } from "../utils/formatting";
 import {
     deleteTerm,
     fuseSearchWithLen,
     fuzzySearch,
 } from "../utils/fuzzySearch";
 import prisma from "../db";
-import regexpBuild, { baseRegexp, compiledRegexp } from "../utils/regexpBuilder";
+import regexpBuild, {
+    baseRegexp,
+    compiledRegexp,
+} from "../utils/regexpBuilder";
 import TelegramBot from "node-telegram-bot-api";
 import { requestIDKFeedback, requestTermFeedback } from "./telemetry";
 import {
     categorizeMarkup,
     Command,
-    keyboardWithConfirmation, ModerateAction, moderateMarkup,
-    processReplenishment, telemetryMarkup,
+    keyboardWithConfirmation,
+    ModerateAction,
+    moderateMarkup,
+    processReplenishment,
+    telemetryMarkup,
 } from "./templates";
 import { genPic } from "../utils/drawing";
 import { bot, registerCallback } from "./bot";
@@ -50,6 +54,7 @@ export const commands: Command[] = [
                     .then(() => bot.sendMessage(msg.chat.id, `${texts.thx} ${texts.reviewPromise}`))
                     .catch(e => bot.sendMessage(msg.chat.id, e));
             }
+
             const chatId = msg.chat.id;
             const vars: string[] = BaseFormatting.reformat(
                 BaseFormatting.capitalize([match[1], match[2]]),
@@ -172,9 +177,10 @@ export const commands: Command[] = [
             const entry = fuzzySearch(match);
             if (entry) {
                 Metrics.successfulTermSearch.inc();
-                genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
-                    caption: BaseFormatting.formatAnswerUnpreceded(entry),
-                }));
+                genPic(entry)
+                    .then(buff => bot.sendPhoto(msg.chat.id, buff, {
+                        caption: BaseFormatting.formatAnswerUnpreceded(entry),
+                    }));
                 requestTermFeedback(entry, msg);
             } else {
                 Metrics.failedTermSearch.inc();
@@ -260,7 +266,8 @@ export const commands: Command[] = [
                     where: {
                         status: "waiting",
                     },
-                })]).then(([telemetry, staging]) => bot.sendMessage(msg.chat.id, BaseFormatting.formatStatus(telemetry, staging)));
+                })])
+                    .then(([telemetry, staging]) => bot.sendMessage(msg.chat.id, BaseFormatting.formatStatus(telemetry, staging)));
             } else {
                 bot.sendMessage(msg.chat.id, texts.hasNoRights);
             }
@@ -276,9 +283,10 @@ export const defaultCommand = {
             const entry = fuzzySearch(match);
             if (entry) {
                 Metrics.successfulTermSearch.inc();
-                genPic(entry).then(buff => bot.sendPhoto(msg.chat.id, buff, {
-                    caption: BaseFormatting.formatAnswerUnpreceded(entry),
-                }));
+                genPic(entry)
+                    .then(buff => bot.sendPhoto(msg.chat.id, buff, {
+                        caption: BaseFormatting.formatAnswerUnpreceded(entry),
+                    }));
                 requestTermFeedback(entry, msg, true);
             } else {
                 Metrics.failedTermSearch.inc();

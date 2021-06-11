@@ -53,7 +53,8 @@ export function eraseTerm(term: obscure): void {
 }
 
 export function fuseSearchWithLen(query: (string[] | null), num: number): Fuse.FuseResult<obscure>[] {
-    return query ? fuse.search(query.join(" | ")).slice(0, num) : [];
+    return query ? fuse.search(query.join(" | "))
+        .slice(0, num) : [];
 }
 
 export function fuzzySearchWithLen(query: (string[] | null), num: number): obscure[] {
@@ -74,7 +75,7 @@ export function findAndValidateTerm(text: string): (obscure | undefined) {
         .split(" "));
 }
 
-export function findAndValidateCategory(text: string):Promise<null | categories> {
+export function findAndValidateCategory(text: string): Promise<null | categories> {
     if (!compiledRegexp.categoryDef.test(text)) {
         return Promise.resolve(null);
     }

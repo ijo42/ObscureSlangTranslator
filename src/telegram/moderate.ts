@@ -7,6 +7,7 @@ import { TelegramInteraction } from "../db/interaction";
 import { bot } from "./bot";
 
 const moderators = new Map<number, number>();
+
 // TELEGRAM USER ID, MODERATOR ID
 
 function firstStart() {
@@ -15,7 +16,8 @@ function firstStart() {
         bot.onText(/\/setup ([/+=\w]{8})/, (msg, match) => {
             const promotable = msg.from;
             if (promotable && match && match[1] === setupUUID) {
-                promoteUser(promotable, -1).then(() => setupUUID = "")
+                promoteUser(promotable, -1)
+                    .then(() => setupUUID = "")
                     .then(() => bot.sendMessage(promotable.id, texts.promoteAnnounce))
                     .catch(e => bot.sendMessage(promotable.id, e.stack));
             }
@@ -34,14 +36,15 @@ export default async function setup(): Promise<void> {
                 },
             },
         },
-    }).then(val => {
-        val.forEach(usr => {
-            if (usr.users.telegram_id !== null) {
-                moderators.set(usr.users.telegram_id, usr.id);
-            }
+    })
+        .then(val => {
+            val.forEach(usr => {
+                if (usr.users.telegram_id !== null) {
+                    moderators.set(usr.users.telegram_id, usr.id);
+                }
+            });
+            firstStart();
         });
-        firstStart();
-    });
 }
 
 export function hasRights(userId: number | undefined): number | undefined {
@@ -62,7 +65,8 @@ export function promoteUser(promotable: User, promoted_by: number): Promise<void
                 },
             },
         },
-    }).then(usr => {
-        moderators.set(<number>usr.users.telegram_id, usr.id);
-    });
+    })
+        .then(usr => {
+            moderators.set(<number>usr.users.telegram_id, usr.id);
+        });
 }

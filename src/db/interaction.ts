@@ -1,12 +1,19 @@
 import prisma from "./index";
 import { BaseFormatting, TelegramFormatting } from "../utils/formatting";
 import { hasRights } from "../telegram/moderate";
-import { obscure, categories, Prisma, users, staging_status } from "@prisma/client";
+import {
+    categories,
+    obscure,
+    Prisma,
+    staging_status,
+    users,
+} from "@prisma/client";
 import TelegramBot from "node-telegram-bot-api";
 import { ModerateAction } from "../telegram/templates";
+
 type moderatorType = Prisma.moderatorsCreateNestedOneWithoutStagingInput;
-type obscureType   = Prisma.obscureCreateNestedOneWithoutStagingInput;
-type userType      = Prisma.usersCreateNestedOneWithoutStagingInput;
+type obscureType = Prisma.obscureCreateNestedOneWithoutStagingInput;
+type userType = Prisma.usersCreateNestedOneWithoutStagingInput;
 type defaultPromise = Promise<{ id: number }>;
 
 export namespace TelegramInteraction {
@@ -46,14 +53,14 @@ export namespace TelegramInteraction {
     }
 
     export function markUseless(e: { id: number }, message: { text?: string }): defaultPromise {
-        if(!message.text) {
+        if (!message.text) {
             throw new Error();
         }
         return TelemetryInteraction.markUseless(e, message.text);
     }
 
     export function requestTerm(user: User, message: { text?: string }): defaultPromise {
-        if(!message.text) {
+        if (!message.text) {
             throw new Error();
         }
         return TelemetryInteraction.requestTerm(userValidate(user), message.text);
@@ -81,7 +88,10 @@ export namespace TelegramInteraction {
 
 export namespace TermInteraction {
 
-    export function pushStaging({ term, value }: obscure, users: userType): defaultPromise {
+    export function pushStaging({
+        term,
+        value,
+    }: obscure, users: userType): defaultPromise {
         return prisma.staging.create({
             data: {
                 term,
@@ -114,14 +124,15 @@ export namespace TermInteraction {
             data: {
                 status: "deleted",
             },
-        }).then(() => prisma.obscure.delete({
-            where: {
-                id: obscureTerm.id,
-            },
-            select: {
-                id: true,
-            },
-        }));
+        })
+            .then(() => prisma.obscure.delete({
+                where: {
+                    id: obscureTerm.id,
+                },
+                select: {
+                    id: true,
+                },
+            }));
     }
 
     export function pushSynonym(entry: obscure, staging: ModerateAction): defaultPromise {
@@ -185,7 +196,7 @@ export namespace TelemetryInteraction {
             },
         });
     }
-    
+
     export function requestTerm(user: userType, text: string): defaultPromise {
         return prisma.telemetry.create({
             data: {
@@ -260,11 +271,12 @@ export namespace StagingInteraction {
             select: {
                 status: true,
             },
-        }).then(staging => {
-            if (staging?.status !== "waiting") {
-                throw new Error("Term is already moderated");
-            }
-        });
+        })
+            .then(staging => {
+                if (staging?.status !== "waiting") {
+                    throw new Error("Term is already moderated");
+                }
+            });
 
         return prisma.staging.update({
             where: {

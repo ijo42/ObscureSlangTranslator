@@ -16,7 +16,8 @@ import { compiledRegexp } from "../utils/regexpBuilder";
 import {
     CategoryInteraction,
     TelegramInteraction,
-    TelemetryInteraction, TermInteraction,
+    TelemetryInteraction,
+    TermInteraction,
 } from "../db/interaction";
 import { bot, registerCallback } from "./bot";
 import { obscure } from "@prisma/client";
@@ -105,7 +106,7 @@ export function moderateMarkup(action: ModerateAction, restrictedTo: number | bo
                             .then(acceptedAs => TelegramInteraction.moderateAction(action, "accepted", acceptedAs)
                                 .then(() => {
                                     bot.sendMessage(action.reviewingChat, texts.moderateAnnounce.acceptedNotify);
-                                    bot.sendMessage(action.author.id, format(texts.moderateAnnounce.accepted, 
+                                    bot.sendMessage(action.author.id, format(texts.moderateAnnounce.accepted,
                                         TelegramFormatting.formatAnswer(action)), {
                                         parse_mode: "MarkdownV2",
                                     });

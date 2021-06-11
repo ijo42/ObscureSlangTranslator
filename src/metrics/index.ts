@@ -46,7 +46,8 @@ export default async function app(): Promise<void> {
 
     const server = http.createServer((_req, res) => {
         res.setHeader("Content-Type", register.contentType);
-        register.metrics().then(chunk => res.end(chunk));
+        register.metrics()
+            .then(chunk => res.end(chunk));
     });
 
     await server.listen(8080);

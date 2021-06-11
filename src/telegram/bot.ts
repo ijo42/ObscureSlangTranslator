@@ -39,11 +39,12 @@ export default async function app(): Promise<void> {
     await bot.setMyCommands(commands);
 
     console.log(`Registered ${commands.length} commands`);
-    bot.getMe().then(value => {
-        if (value.username) {
-            console.log(`Bot: https://t.me/${value.username}`);
-        }
-    });
+    bot.getMe()
+        .then(value => {
+            if (value.username) {
+                console.log(`Bot: https://t.me/${value.username}`);
+            }
+        });
 
     console.log("Bot setup successful");
 }
@@ -86,13 +87,15 @@ export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: 
 
 export function processInline(query: TelegramBot.InlineQuery): void {
     Metrics.inlineRequests.inc();
-    bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15).map(value => <TelegramBot.InlineQueryResultArticle>{
-        type: "article",
-        id: randomInt(10000).toString(),
-        title: value.term,
-        input_message_content: <TelegramBot.InputTextMessageContent>{
-            message_text: TelegramFormatting.formatAnswer(value),
-            parse_mode: "MarkdownV2",
-        },
-    }));
+    bot.answerInlineQuery(query.id, fuzzySearchWithLen([query.query], 15)
+        .map(value => <TelegramBot.InlineQueryResultArticle>{
+            type: "article",
+            id: randomInt(10000)
+                .toString(),
+            title: value.term,
+            input_message_content: <TelegramBot.InputTextMessageContent>{
+                message_text: TelegramFormatting.formatAnswer(value),
+                parse_mode: "MarkdownV2",
+            },
+        }));
 }

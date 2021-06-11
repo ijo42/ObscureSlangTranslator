@@ -21,6 +21,7 @@ async function main() {
 
 main()
     .catch(e => {
-        terminate().then(() => process.exit(1));
+        terminate()
+            .then(() => process.exit(1));
         throw e;
     });

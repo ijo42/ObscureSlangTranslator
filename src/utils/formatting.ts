@@ -37,7 +37,7 @@ export namespace BaseFormatting {
 
     export const grabUsrID: (s: string) => number = (s: string) => {
         if (!s.includes("<") || !s.includes(">")) {
-            return  -1;
+            return -1;
         }
         return Number(s.slice(s.lastIndexOf("<") + 1, s.lastIndexOf(">")));
     };

@@ -14,12 +14,13 @@ export default async function setup(): Promise<void> {
         Jimp.loadFont("resources/body.fnt"),
         Jimp.loadFont("resources/additional.fnt"),
         Jimp.create("resources/template.png"),
-    ]).then(([title, body, additional, templatePromise]) => {
-        titleFont = title;
-        bodyFont = body;
-        additionalFont = additional;
-        template = templatePromise;
-    });
+    ])
+        .then(([title, body, additional, templatePromise]) => {
+            titleFont = title;
+            bodyFont = body;
+            additionalFont = additional;
+            template = templatePromise;
+        });
 }
 
 export function genPic(entry: obscure): Promise<Buffer> {

@@ -11,35 +11,37 @@ export function requestTermFeedback(term: obscure, originalMsg: TelegramBot.Mess
         return;
     }
 
-    TelegramInteraction.termFeedback(term, originalMsg.from).then(e => {
-        if (!(originalMsg.from && feedbackRequested)) {
-            return;
-        }
+    TelegramInteraction.termFeedback(term, originalMsg.from)
+        .then(e => {
+            if (!(originalMsg.from && feedbackRequested)) {
+                return;
+            }
 
-        const markup: Keyboard = {
-            inline_keyboard: [
-                [
-                    {
-                        text: `${texts.binary.yes}!`,
-                        callback_data: "Y",
-                        callback: () => TelemetryInteraction.markUseful(e)
-                            .then(() => bot.sendMessage(originalMsg.chat.id, texts.thx)),
-                    },
-                    {
-                        text: texts.binary.no,
-                        callback_data: "N",
-                        callback: () => TelegramInteraction.markUseless(e, originalMsg)
-                            .then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise)),
-                    },
+            const markup: Keyboard = {
+                inline_keyboard: [
+                    [
+                        {
+                            text: `${texts.binary.yes}!`,
+                            callback_data: "Y",
+                            callback: () => TelemetryInteraction.markUseful(e)
+                                .then(() => bot.sendMessage(originalMsg.chat.id, texts.thx)),
+                        },
+                        {
+                            text: texts.binary.no,
+                            callback_data: "N",
+                            callback: () => TelegramInteraction.markUseless(e, originalMsg)
+                                .then(() => bot.sendMessage(originalMsg.chat.id, texts.changePromise)),
+                        },
+                    ],
                 ],
-            ],
-            restrictedTo: originalMsg.from.id,
-        };
+                restrictedTo: originalMsg.from.id,
+            };
 
-        bot.sendMessage(originalMsg.chat.id, texts.requestFeedback, {
-            reply_markup: markup,
-        }).then(r => registerCallback(r, markup));
-    });
+            bot.sendMessage(originalMsg.chat.id, texts.requestFeedback, {
+                reply_markup: markup,
+            })
+                .then(r => registerCallback(r, markup));
+        });
 }
 
 export function requestIDKFeedback(originalMsg: TelegramBot.Message): void {
@@ -72,13 +74,14 @@ export function requestIDKFeedback(originalMsg: TelegramBot.Message): void {
 
     bot.sendMessage(originalMsg.chat.id, texts.requestIDKFeedback, {
         reply_markup: markup,
-    }).then(r => registerCallback(r, markup));
+    })
+        .then(r => registerCallback(r, markup));
 
     askContribute(originalMsg.chat.id);
 }
 
 function askContribute(chatId: number) {
-    if(randomInt(5) === 0) {
+    if (randomInt(5) === 0) {
         bot.sendMessage(chatId, texts.contributeAsk);
     }
 }
