@@ -51,4 +51,5 @@ export default async function app(): Promise<void> {
     });
 
     await server.listen(8080);
+    console.log("Prometheus client run on http://127.0.0.1:8080");
 }
