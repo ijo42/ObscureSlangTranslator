@@ -77,8 +77,8 @@ export const processQuery: (query: TelegramBot.CallbackQuery) => void = (query: 
                         registeredCallbacks.delete(query.message.message_id);
                         bot.answerCallbackQuery(query.id);
                     }
-                } catch (e) {
-                    bot.sendMessage(query.from.id, e.stack);
+                } catch (e: any) {
+                    bot.sendMessage(query.from.id, e);
                 }
             }
         }
