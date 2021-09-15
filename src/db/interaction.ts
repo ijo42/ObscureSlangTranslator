@@ -116,10 +116,10 @@ export namespace TermInteraction {
         });
     }
 
-    export function deleteTerm(obscureTerm: obscure): defaultPromise {
+    export function deleteTerm({ id }: obscure): defaultPromise {
         return prisma.staging.updateMany({
             where: {
-                accepted_as: obscureTerm.id,
+                accepted_as: id,
             },
             data: {
                 status: "deleted",
@@ -127,7 +127,7 @@ export namespace TermInteraction {
         })
             .then(() => prisma.obscure.delete({
                 where: {
-                    id: obscureTerm.id,
+                    id,
                 },
                 select: {
                     id: true,
@@ -135,9 +135,11 @@ export namespace TermInteraction {
             }));
     }
 
-    export function pushSynonym(entry: obscure, staging: ModerateAction): defaultPromise {
+    export function pushSynonym({ id }: obscure, staging: ModerateAction): defaultPromise {
         return prisma.obscure.update({
-            where: entry,
+            where: {
+                id,
+            },
             data: {
                 synonyms: {
                     push: staging.term,
