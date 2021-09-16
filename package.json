@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node src/app.ts",
     "start": "node dist/app.js",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "eslint:check": "eslint ./src/**/*",
     "eslint:fix": "eslint ./src/**/* --fix"
   },
