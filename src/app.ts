@@ -14,7 +14,9 @@ async function main() {
 
     await setupTelegram();
 
-    await setupMetrics();
+    if(process.env.PROM_ENABLED) {
+        await setupMetrics();
+    }
 
     console.log("Service setup successful");
 }
