@@ -2,11 +2,11 @@
   "name": "obscure-slang-translator",
   "version": "1.5.0",
   "description": "A little educational project. Telegram bot that translate stranger Russian slang to human language",
-  "main": "ts-node src/app.ts",
+  "main": "dist/app.js",
   "scripts": {
     "dev": "ts-node src/app.ts",
     "start": "node dist/app.js",
-    "build": "tsc -p .",
+    "build": "tsc",
     "eslint:check": "eslint ./src/**/*",
     "eslint:fix": "eslint ./src/**/* --fix"
   },

@@ -8,8 +8,13 @@ import { randomInt } from "crypto";
 import { TelegramFormatting } from "../utils/formatting";
 import { Metrics } from "../metrics";
 
-const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN";
-export const bot = new TelegramBot(token, { polling: true });
+const token = process.env.TELEGRAM_TOKEN || "YOUR_TELEGRAM_BOT_TOKEN",
+    url = process.env.APP_URL || "https://obscure-slang-translator.herokuapp.com:443";
+export const bot = new TelegramBot(token, { 
+    webHook: {
+        port: Number(process.env.PORT),
+    },
+});
 
 export default async function app(): Promise<void> {
     await setupModerateCache();
@@ -18,7 +23,7 @@ export default async function app(): Promise<void> {
         bot.sendMessage(msg.chat.id, texts.welcome);
     });
 
-    bot.on("polling_error", error => {
+    bot.on("webhook_error", error => {
         console.log(JSON.stringify(error));  // => 'EFATAL'
     });
 
@@ -45,6 +50,7 @@ export default async function app(): Promise<void> {
                 console.log(`Bot: https://t.me/${value.username}`);
             }
         });
+    await bot.setWebHook(`${url}/bot${token}`);
 
     console.log("Bot setup successful");
 }
