@@ -1,5 +1,22 @@
 # Changelog
 
+### [1.5.1](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.5.0...v1.5.1) (2021-09-20)
+
+
+### Features
+
+* heroku deploy ([4c64541](https://www.github.com/ijo42/ObscureSlangTranslator/commit/4c64541b233e017d21054a59f7280c924548b070))
+
+
+### Bug Fixes
+
+* term selection by id ([1fa62b1](https://www.github.com/ijo42/ObscureSlangTranslator/commit/1fa62b186feecefbecfe043596ac21e1c53e8fd8))
+
+
+### Miscellaneous Chores
+
+* release 1.5.1 ([5c8ae67](https://www.github.com/ijo42/ObscureSlangTranslator/commit/5c8ae677b3443ff3e091d97549a7146b5201cefb))
+
 ## [1.5.0](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.4.0...v1.5.0) (2021-06-11)
 
 
