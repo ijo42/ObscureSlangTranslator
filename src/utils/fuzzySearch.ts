@@ -4,7 +4,8 @@ import prisma from "../db";
 import { compiledRegexp } from "./regexpBuilder";
 import { TermInteraction } from "../db/interaction";
 
-const options = {
+const options: Fuse.IFuseOptions<obscure> = {
+    fieldNormWeight: 1,
     includeScore: true,
     minMatchCharLength: 2,
     threshold: 0.55,
