@@ -18,7 +18,7 @@
   "license": "MPL-2.0",
   "dependencies": {
     "@prisma/client": "^3.0.2",
-    "fuse.js": "^6.5.3",
+    "fuse.js": "^6.6.0",
     "jimp": "^0.16.1",
     "node-telegram-bot-api": "^0.57.0",
     "prom-client": "^14.0.0"
