@@ -27,7 +27,7 @@
     "@types/node-telegram-bot-api": "^0.56.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^4.31.1",
-    "eslint": "^8.12.0",
+    "eslint": "^8.14.0",
     "husky": "^7.0.4",
     "prisma": "^3.0.2",
     "ts-node": "^10.2.1",
