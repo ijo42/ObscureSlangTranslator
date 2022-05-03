@@ -20,12 +20,12 @@ I love java, but sometimes I want some variety... sorry for the bleeding eyes
 
 ## Image-Variants
 
-|                Tags | Description                                                  |
-| ------------------: | ------------------------------------------------------------ |
-|            `latest` | Using the `latest` tag will pull the latest release image    |
-|            `master` | Using the `master` tag will pull latest master-branch image  |
+|                Tags | Description                                                                 |
+|--------------------:|-----------------------------------------------------------------------------|
+|            `latest` | Using the `latest` tag will pull the latest release image                   |
+|            `master` | Using the `master` tag will pull latest master-branch image                 |
 | `sha-([a-z0-9]{7})` | Using this tag will push image based on relevant git-commit `(sha-155fc99)` |
-|             `#.#.#` | Using this tag will push relevant Release `(1.1.0)`          |
+|             `#.#.#` | Using this tag will push relevant Release `(1.1.0)`                         |
 
 ------
 
@@ -61,7 +61,7 @@ services:
     depends_on:
       - db
     environment:
-      DB_URL: postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:5432/${PGDATABASE}?schema=public
+      DATABASE_URL: postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:5432/${PGDATABASE}?schema=public
       DEBUG: ${DEBUG}
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
   db:
@@ -83,6 +83,25 @@ volumes:
 
 4. start via `docker-compose up -d`
 5. (optional) setup moderator's rights via console-instructions
+
+
+*using heroku:*
+
+1. create bot-account via [BotFather](https://telegram.me/BotFather)
+2. create heroku application (https://dashboard.heroku.com/new-app)
+3. add postgres add-on
+4. clone this repo, link heroku remote (`heroku git:remote -a <app-name>`)
+5. add next heroku config vars
+
+| FIELD                                                                     | VALUE                                  |
+|---------------------------------------------------------------------------|----------------------------------------|
+| TELEGRAM_TOKEN                                                            | <bot-token>                            |
+| APP_URL                                                                   | `https://<app-name>.herokuapp.com:443` |
+| [NTBA_FIX_319](https://github.com/yagop/node-telegram-bot-api/issues/319) | TRUE                                   |
+| [NTBA_FIX_350](https://github.com/yagop/node-telegram-bot-api/issues/350) | TRUE                                   |
+6. push to heroku (`git push heroku master`)
+5. (optional) setup moderator's rights via log-instructions
+
 
 ## License
 
