@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.5.2](https://github.com/ijo42/ObscureSlangTranslator/compare/v1.5.1...v1.5.2) (2022-05-03)
+
+
+### Bug Fixes
+
+* fuse.js new option param ([865ea6c](https://github.com/ijo42/ObscureSlangTranslator/commit/865ea6ccea5067433d8dad37aa799b731bea4eb6))
+
 ### [1.5.1](https://www.github.com/ijo42/ObscureSlangTranslator/compare/v1.5.0...v1.5.1) (2021-09-20)
 
 

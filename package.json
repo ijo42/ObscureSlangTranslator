@@ -1,6 +1,6 @@
 {
   "name": "obscure-slang-translator",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "A little educational project. Telegram bot that translate stranger Russian slang to human language",
   "main": "dist/app.js",
   "scripts": {
